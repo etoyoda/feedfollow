@@ -1,5 +1,5 @@
 #!/bin/sh
-ruby='/usr/local/bin/ruby243 -w'
+ruby='ruby -w'
 url='http://www.data.jma.go.jp/developer/xml/feed/extra.xml'
 cd $(dirname $0)
 
