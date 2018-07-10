@@ -21,7 +21,7 @@
 * 形式: テキスト/FM12,FM35など
 * 更新検知: ちょっと開発が必要、5分周期
 * ヘッダ抽出: 可能
-* 所在: http://tgftp.nws.noaa.gov/SL.us008001/DF.an/DC.vsndn/DS.raobs/　など
+* ドキュメント: https://www.weather.gov/tg/obsfiles
 * ファイル名: シリアル、約5日周期で再利用
 
 ### GISC Washington METAR
