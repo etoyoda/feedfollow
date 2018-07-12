@@ -33,14 +33,10 @@ class WGet
     if @ca
       @conn.ca_file = @ca
     else
+      STDERR.puts "Warning: server certificate not verified"
       @conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
-    begin
-      @conn.start
-    rescue Net::OpenTimeout, Errno::ECONNRESET => e
-      $logger.err('499 ' + e.class.to_s)
-      raise e
-    end
+    @conn.start
   end
 
   def get(uri, lmt = nil, etag = nil)
@@ -59,8 +55,12 @@ class WGet
       @resp = @conn.get2(path, hdr)
       STDERR.puts "#--> #{@resp.code}" if $VERBOSE
       rc = @resp.code
-    rescue Net::OpenTimeout, Errno::ECONNRESET
-      rc = '499'
+    rescue Net::OpenTimeout => e
+      rc = '499';  $logger.err([rc, e.class.to_s].join(' '))
+    rescue Errno::ECONNRESET => e
+      rc = '498';  $logger.err([rc, e.class.to_s].join(' '))
+    rescue Net::ReadTimeout => e
+      rc = '497';  $logger.err([rc, e.class.to_s].join(' '))
     end
     @n[rc] += 1
     rc
@@ -80,6 +80,10 @@ class WGet
 
   def tag s
     @n['tag'] = s
+  end
+
+  def eagain
+    @n['EAGAIN'] = 1
   end
 
   def close
@@ -149,7 +153,7 @@ class SynDL
     when '200' then
       :do_nothing
     else
-      errid = 'err:' + Time.now.utc.strftime('%Y-%m-%dT%H%M%SZ')
+      errid = "err:#{code}:" + Time.now.utc.strftime('%Y-%m-%dT%H%M%SZ')
       ldb[errid] = feed
       exit "0#{code}".to_i
     end
@@ -209,6 +213,9 @@ class SynDL
 	  end
 	}
     }
+  rescue Errno::EAGAIN
+    $logger.err("db #{@logdb} busy - possibly multiple runs")
+    @wget.eagain
   ensure
     @wget.close
   end
