@@ -78,20 +78,20 @@ class TarWriter
       base -= 10240
       raise "tar header not found" if base < 0
       @io.pos = base
-      STDERR.puts "read #{base}+20b"
+      STDERR.puts "read #{base}+20b" if $DEBUG
       buf = @io.read(10240)
       19.downto(0) {|i|
         magic = buf[512 * i + 257, 5]
 	next unless magic == 'ustar'
 	recpos = base + 512 * i
-	STDERR.puts "ustar found at #{recpos}"
+	STDERR.puts "ustar found at #{recpos}" if $DEBUG
 	hdr = buf[512 * i, 500]
 	cksum = hdr[148, 8].unpack('A*').first.to_i(8)
 	hdr[148, 8] = ' ' * 8
 	s = 0
 	hdr.each_byte{|c| s += c}
 	next unless cksum == s
-	STDERR.puts "checksum #{s} matches at #{recpos}"
+	STDERR.puts "checksum #{s} matches at #{recpos}" if $DEBUG
 	size = hdr[124, 12].unpack('A*').first.to_i(8)
 	size -= 1
 	size -= size % 512
