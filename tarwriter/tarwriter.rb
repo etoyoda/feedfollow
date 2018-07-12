@@ -23,21 +23,25 @@ class TarWriter
       case mode
       when 'x'
         File.open(file, WRONLY|CREAT|EXCL|TRUNC).set_encoding('BINARY')
+      when 'a'
+	File.open(file, 'ab').set_encoding('BINARY')
+      when 'w'
+	File.open(file, 'wb').set_encoding('BINARY')
       else
-	File.open(file, fmode)
+        raise "unsupported mode=#{mode}"
       end
     end
     @blocking_factor = 20
     @pool = []
   end
 
-  def header bfnam, size, cksum = nil
+  def header bfnam, size, time, cksum = nil
     raise "too long filename #{bfnam}" if bfnam.size >= 100
     mode = sprintf("%07o", 0664)
     uid = gid = sprintf("%07o", 99)
     csize = sprintf("%011o", size)
     cks = cksum ? sprintf("%06o\0", cksum) : ""
-    mtime = sprintf("%011o", Time.now.to_i)
+    mtime = sprintf("%011o", time)
     typeflag = '0'
     linkname = ''
     magic = 'ustar'
@@ -50,13 +54,13 @@ class TarWriter
       version, uname, gname, devmajor, devminor, prefix].pack(fmt)
   end
 
-  def add fnam, content
+  def add fnam, content, time = Time.now
     bfnam = String.new(fnam, encoding: "BINARY")
     bcontent = String.new(content, encoding: "BINARY")
-    testhdr = header(bfnam, bcontent.size)
+    testhdr = header(bfnam, bcontent.size, time)
     cksum = 0
     testhdr.each_byte {|b| cksum += b }
-    hdr = header(bfnam, bcontent.size, cksum)
+    hdr = header(bfnam, bcontent.size, time, cksum)
     block_write(hdr)
     ofs = 0
     while blk = bcontent.byteslice(ofs, 512)
@@ -90,8 +94,10 @@ class TarWriter
 end
 
 if $0 == __FILE__
+  mode = 'x'
+  mode = ARGV.shift.sub(/^-/, '') if /^-[xwa]/ === ARGV.first
   ofn = ARGV.shift
-  TarWriter.open(ofn, 'x') {|tar|
+  TarWriter.open(ofn, mode) {|tar|
     ARGV.each {|fn|
       File.open(fn) {|ifp|
         tar.add(File.basename(fn), ifp.read)
