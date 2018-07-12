@@ -22,15 +22,16 @@ class TarWriter
     else
       case mode
       when 'x'
-        File.open(file, WRONLY|CREAT|EXCL|TRUNC).set_encoding('BINARY')
+        File.open(file, WRONLY|CREAT|EXCL|TRUNC|BINARY).set_encoding('BINARY')
       when 'a'
-	File.open(file, 'ab').set_encoding('BINARY')
+        File.open(file, RDWR|CREAT|BINARY).set_encoding('BINARY')
       when 'w'
-	File.open(file, 'wb').set_encoding('BINARY')
+	File.open(file, WRONLY|CREAT|TRUNC|BINARY).set_encoding('BINARY')
       else
         raise "unsupported mode=#{mode}"
       end
     end
+    find_eof if mode == 'a'
     @blocking_factor = 20
     @pool = []
   end
@@ -66,6 +67,38 @@ class TarWriter
     while blk = bcontent.byteslice(ofs, 512)
       block_write([blk].pack('a512'))
       ofs += 512
+    end
+  end
+
+  def find_eof
+    @io.seek(0, IO::SEEK_END)
+    base = @io.pos
+    base -= base % 10240
+    loop do
+      base -= 10240
+      raise "tar header not found" if base < 0
+      @io.pos = base
+      STDERR.puts "read #{base}+20b"
+      buf = @io.read(10240)
+      19.downto(0) {|i|
+        magic = buf[512 * i + 257, 5]
+	next unless magic == 'ustar'
+	recpos = base + 512 * i
+	STDERR.puts "ustar found at #{recpos}"
+	hdr = buf[512 * i, 500]
+	cksum = hdr[148, 8].unpack('A*').first.to_i(8)
+	hdr[148, 8] = ' ' * 8
+	s = 0
+	hdr.each_byte{|c| s += c}
+	next unless cksum == s
+	STDERR.puts "checksum #{s} matches at #{recpos}"
+	size = hdr[124, 12].unpack('A*').first.to_i(8)
+	size -= 1
+	size -= size % 512
+	size += 512
+	@io.pos = (recpos + 512 + size)
+	return @io
+      }
     end
   end
 
