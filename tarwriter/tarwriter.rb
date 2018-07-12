@@ -16,7 +16,6 @@ class TarWriter
   end
 
   def initialize file, mode = 'w'
-    @io = nil
     @io = if IO === file
     then
       file
@@ -28,29 +27,27 @@ class TarWriter
 	File.open(file, fmode)
       end
     end
+    @blocking_factor = 20
+    @pool = []
   end
 
   def header bfnam, size, cksum = nil
     raise "too long filename #{bfnam}" if bfnam.size >= 100
-    mode = '0000644'
-    uid = gid = '32000'
+    mode = sprintf("%07o", 0664)
+    uid = gid = sprintf("%07o", 99)
     csize = sprintf("%011o", size)
-    cks = cksum ? sprintf("%o\0", cksum) : ""
+    cks = cksum ? sprintf("%06o\0", cksum) : ""
     mtime = sprintf("%011o", Time.now.to_i)
     typeflag = '0'
     linkname = ''
     magic = 'ustar'
     version = '00'
     uname = gname = 'nobody'
-    devmajor = devminor = ''
+    devmajor = devminor = sprintf('%07o', 0)
     prefix = filler = ''
     fmt = "a100 a8 a8 a8 a12 a12 A8 a1 a100 a6 a2 a32 a32 a8 a8 a155"
     [bfnam, mode, uid, gid, csize, mtime, cks, typeflag, linkname, magic,
       version, uname, gname, devmajor, devminor, prefix].pack(fmt)
-  end
-
-  def blockwrite str
-    @io.write [str].pack('a512')
   end
 
   def add fnam, content
@@ -60,22 +57,33 @@ class TarWriter
     cksum = 0
     testhdr.each_byte {|b| cksum += b }
     hdr = header(bfnam, bcontent.size, cksum)
-    blockwrite(hdr)
+    block_write(hdr)
     ofs = 0
     while blk = bcontent.byteslice(ofs, 512)
-      blockwrite([blk].pack('a512'))
+      block_write([blk].pack('a512'))
       ofs += 512
     end
   end
 
+  def block_write str
+    @pool.push [str].pack('a512')
+    if @pool.size >= @blocking_factor
+      @io.write @pool.join
+      @pool = []
+    end
+  end
+
   def flush
+    while not @pool.empty?
+      block_write ''
+    end
     @io.flush
   end
 
   def close
+    block_write ''
+    block_write ''
     flush
-    terminator = "\0" * 1024
-    @io.write terminator
     @io.close
   end
 
