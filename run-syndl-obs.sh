@@ -37,7 +37,8 @@ $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
   --match='TEMP|PILOT|AIREP|AMDAR|PIREP' \
   "${app}&Type=Alphanumeric&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
-  "${app}&Type=Alphanumeric&Category=Surface" 
+  "${app}&Type=Alphanumeric&Category=Surface" \
+  --match='' "${app}&Type=Alphanumeric&Subcategory=CLIMAT"
 
 sleep 1
 
