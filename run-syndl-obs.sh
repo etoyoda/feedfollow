@@ -12,7 +12,7 @@ if tty -s; then
   ruby="${ruby} -w"
 fi
 
-TZ=UTC
+TZ=UTC; export TZ
 
 set -e
 
