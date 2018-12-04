@@ -6,5 +6,5 @@ ca='--ca=/etc/ssl/certs/'
 
 cd $(dirname $0)
 
-$ruby -w syndl.rb ysyn.db logsyn.db $pat $ca $url
+$ruby -w syndl.rb ysyn.db logsyn.db --tar=output.tar $pat $ca $url
 

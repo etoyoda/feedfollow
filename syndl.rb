@@ -5,6 +5,8 @@ require 'openssl'
 require 'uri'
 require 'gdbm'
 require 'syslog'
+require 'rubygems'
+require 'tarwriter'
 
 class WGet
 
@@ -108,8 +110,14 @@ class SynDL
   def initialize argv
     @rtdb = argv.shift
     @logdb = argv.shift
-    @feeds = argv
+    @feeds = argv.dup
     help if @feeds.empty?
+    folder = nil
+    if /^--tar=/ === @feeds.first
+      folder = $'
+      @feeds.shift
+    end
+    @folder = TarWriter::Folder.new(folder, 'a')
     @wget = WGet.new
     @pfilter = {}
   end
@@ -184,10 +192,9 @@ class SynDL
 	body = @wget.body
 	STDERR.puts "#size #{body.size}" if $VERBOSE
 	fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
-	File.open(fnam, 'wb') {|ofp|
-	  ofp.write body
-	}
-	ldb[id] = Time.now.utc.strftime('%Y-%m-%dT%H%M%SZ')
+	t = Time.now.utc
+	@folder.add(fnam, body, t)
+	ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
       end
     }
     setlmt(feed, lmt2, etag2)
@@ -222,6 +229,7 @@ class SynDL
     @wget.eagain
   ensure
     @wget.close
+    @folder.close
   end
 
 end
