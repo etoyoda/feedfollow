@@ -52,10 +52,10 @@ class WGet
       path = uri.request_uri
       STDERR.puts "#GET #{path}" if $VERBOSE
       if lmt then
-	hdr['if-modified-since'] = lmt
+    hdr['if-modified-since'] = lmt
       end
       if etag then
-	hdr['If-None-Match'] = etag
+    hdr['If-None-Match'] = etag
       end
       STDERR.puts "# #{hdr.inspect}" if $VERBOSE
       @resp = @conn.get2(path, hdr)
@@ -112,12 +112,8 @@ class SynDL
     @logdb = argv.shift
     @feeds = argv.dup
     help if @feeds.empty?
-    folder = nil
-    if /^--tar=/ === @feeds.first
-      folder = $'
-      @feeds.shift
-    end
-    @folder = TarWriter::Folder.new(folder, 'a')
+    # @folder and @wget must be close()-ed properly
+    @folder = TarWriter::Folder.new(nil, 'a')
     @wget = WGet.new
     @pfilter = {}
   end
@@ -141,12 +137,12 @@ class SynDL
     mode = GDBM::WRCREAT
     GDBM.open(@rtdb, 0644, mode) {|rtdb|
       if lmt then
-	key = "lmt/#{feed}"
-	rtdb[key] = lmt
+    key = "lmt/#{feed}"
+    rtdb[key] = lmt
       end
       if etag then
-	key = "etag/#{feed}"
-	rtdb[key] = etag
+    key = "etag/#{feed}"
+    rtdb[key] = etag
       end
     }
   end
@@ -184,17 +180,17 @@ class SynDL
       end
       if ldb[id] then
         STDERR.puts "#dup skip #{id}" if $VERBOSE
-	next
+        next
       end
       begin
         umsg = URI.parse(id)
-	@wget.get(umsg)
-	body = @wget.body
-	STDERR.puts "#size #{body.size}" if $VERBOSE
-	fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
-	t = Time.now.utc
-	@folder.add(fnam, body, t)
-	ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
+        @wget.get(umsg)
+        body = @wget.body
+        STDERR.puts "#size #{body.size}" if $VERBOSE
+        fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
+        t = Time.now.utc
+        @folder.add(fnam, body, t)
+        ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
       end
     }
     setlmt(feed, lmt2, etag2)
@@ -202,27 +198,34 @@ class SynDL
 
   def run
     GDBM.open(@logdb, 0644, GDBM::WRCREAT) {|ldb|
-	@feeds.each {|feed|
-	  case feed
-	  when /^--match=/
-	    if $'.empty? then @pfilter.delete(:match)
-	    else @pfilter[:match] = Regexp.new($')
-	    end
-	  when /^--reject=/
-	    if $'.empty? then @pfilter.delete(:reject)
-	    else @pfilter[:reject] = Regexp.new($')
-	    end
-	  when /^--ca=/
-	    @wget.ca= $'
-	  when /^--chdir=/
-	    Dir.chdir($')
-	  when /^--tag=/
-	    @wget.tag($')
-	  else
-	    STDERR.puts "getfeed #{feed}" if $VERBOSE
-	    getfeed(ldb, feed)
-	  end
-	}
+    @feeds.each {|feed|
+      case feed
+      when /^--match=/
+        if $'.empty? then @pfilter.delete(:match)
+        else @pfilter[:match] = Regexp.new($')
+        end
+      when /^--reject=/
+        if $'.empty? then @pfilter.delete(:reject)
+        else @pfilter[:reject] = Regexp.new($')
+        end
+      when /^--ca=/
+        @wget.ca= $'
+      when /^--tar=/
+        tar = $'
+        @folder.close
+        @folder = TarWriter::Folder.new(tar, 'a')
+      when /^--chdir=/
+        dir = $'
+        @folder.close
+        Dir.chdir(dir)
+        @folder = TarWriter::Folder.new(nil, 'a')
+      when /^--tag=/
+        @wget.tag($')
+      else
+        STDERR.puts "getfeed #{feed}" if $VERBOSE
+        getfeed(ldb, feed)
+      end
+    }
     }
   rescue Errno::EAGAIN
     $logger.err("db #{@logdb} busy - possibly multiple runs")
