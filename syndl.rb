@@ -31,7 +31,11 @@ class WGet
     @conn = Net::HTTP.new(uri.host, uri.port, :ENV)
     @conn.use_ssl = true
     if @ca
-      @conn.ca_file = @ca
+      if /\/$/ === @ca then
+        @conn.ca_path = @ca
+      else
+        @conn.ca_file = @ca
+      end
     else
       STDERR.puts "Warning: server certificate not verified"
       @conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
