@@ -16,18 +16,24 @@ TZ=UTC
 
 set -e
 
-datedir=${base}/`date +%Y-%m-%d`
+today=`date +%Y-%m-%d`
+datedir=${base}/${today}.new
 
 mkdir -p ${datedir}
 cd ${base}
-if [ X`readlink today || :` != X"$datedir" ]; then
-  rm -f today
-  ln -s ${datedir} today
+current="`readlink current || :`"
+if [ X"${current}" != X"${datedir}" ]; then
+  if [ -d "${current}" ]; then
+    yesterday="`basename $current .new`"
+    mv -f "${current}" "${yesterday}"
+    ln -fs "${yesterday}" latest
+  fi
+  ln -fs ${datedir} current
 fi
 cd ${datedir}
 
 $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
-  --tar=obsan.tar $ca --tag=obsan \
+  --tar=obsan-${today}.tar $ca --tag=obsan \
   --match='TEMP|PILOT|AIREP|AMDAR|PIREP' \
   "${app}&Type=Alphanumeric&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
@@ -36,7 +42,7 @@ $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
 sleep 1
 
 $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
-  --tar=obsbf.tar $ca --tag=obsbf \
+  --tar=obsbf-${today}.tar $ca --tag=obsbf \
   --match='TEMP|PILOT' \
   "${app}&Type=BUFR&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
