@@ -143,8 +143,8 @@ class FeedStore
         t = Time.parse(rec['updated'])
         unless @dfilter === t then
           STDERR.puts "skip -d #{t} #{id}" if $VERBOSE
-	  next
-	end
+          next
+        end
       end
       id = rec['id']
       if idb.has_key?(id) then
@@ -152,14 +152,14 @@ class FeedStore
         next
       end
       begin
-	umsg = ufeed.merge(rec['link/@href'])
-	@wget.get(umsg)
-	body = @wget.body
-	STDERR.puts "size #{body.size}" if $VERBOSE
-	pos = ofp.pos
-	recl = [body.size].pack('N')
-	ofp.write [recl, body, recl].join
-	idb[id] = pos.to_s
+        umsg = ufeed.merge(rec['link/@href'])
+        @wget.get(umsg)
+        body = @wget.body
+        STDERR.puts "size #{body.size}" if $VERBOSE
+        pos = ofp.pos
+        recl = [body.size].pack('N')
+        ofp.write [recl, body, recl].join
+        idb[id] = pos.to_s
       end
     }
     REXML::Parsers::StreamParser.new(fbdy, li).parse
@@ -170,16 +170,16 @@ class FeedStore
     idx = "#{@outfnam}.idx1"
     GDBM.open(idx, 0644, GDBM::WRCREAT) {|idb|
       File.open(@outfnam, 'ab', 0644) {|ofp|
-	@feeds.each {|feed|
-	  case feed
-	  when /^-d(\d\d\d\d)-?(\d\d)-?(\d\d)/
-	    base = Time.gm($1.to_i, $2.to_i, $3.to_i)
-	    @dfilter = base...(base + 86400)
-	    STDERR.puts @dfilter.inspect if $VERBOSE
-	  else
-	    getfeed(idb, ofp, feed)
-	  end
-	}
+        @feeds.each {|feed|
+          case feed
+          when /^-d(\d\d\d\d)-?(\d\d)-?(\d\d)/
+            base = Time.gm($1.to_i, $2.to_i, $3.to_i)
+            @dfilter = base...(base + 86400)
+            STDERR.puts @dfilter.inspect if $VERBOSE
+          else
+            getfeed(idb, ofp, feed)
+          end
+        }
       }
     }
     ensure
