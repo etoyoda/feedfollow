@@ -18,7 +18,7 @@ class WGet
     @conn = nil
     @resp = nil
     @ca = nil
-    $logger = Syslog.open('feedtore', Syslog::LOG_PID, Syslog::LOG_NEWS)
+    $logger = Syslog.open('feedstore', Syslog::LOG_PID, Syslog::LOG_NEWS)
     $onset = Time.now
     @n = Hash.new(0)
   end
