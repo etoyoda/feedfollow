@@ -7,6 +7,8 @@ require 'time'
 require 'rexml/parsers/baseparser'
 require 'rexml/parsers/streamparser'
 require 'rexml/streamlistener'
+require 'rubygems'
+require 'tarwriter'
 
 class WGet
 
@@ -125,7 +127,7 @@ class FeedStore
   end
 
 
-  def getfeed(idb, ofp, feed)
+  def getfeed(idb, tar, feed)
     lmt = getlmt(feed)
     ufeed = URI.parse(feed)
     code = @wget.get(ufeed, lmt)
@@ -156,9 +158,7 @@ class FeedStore
         @wget.get(umsg)
         body = @wget.body
         STDERR.puts "size #{body.size}" if $VERBOSE
-        pos = ofp.pos
-        recl = [body.size].pack('N')
-        ofp.write [recl, body, recl].join
+        pos = tar.add(id, body)
         idb[id] = pos.to_s
       end
     }
@@ -169,7 +169,7 @@ class FeedStore
   def run
     idx = "#{@outfnam}.idx1"
     GDBM.open(idx, 0644, GDBM::WRCREAT) {|idb|
-      File.open(@outfnam, 'ab', 0644) {|ofp|
+      TarWriter.open("#{@outfnam}.tar", 'a') {|tar|
         @feeds.each {|feed|
           case feed
           when /^-d(\d\d\d\d)-?(\d\d)-?(\d\d)/
@@ -177,7 +177,7 @@ class FeedStore
             @dfilter = base...(base + 86400)
             STDERR.puts @dfilter.inspect if $VERBOSE
           else
-            getfeed(idb, ofp, feed)
+            getfeed(idb, tar, feed)
           end
         }
       }
