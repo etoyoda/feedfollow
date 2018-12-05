@@ -1,9 +1,11 @@
 #!/usr/bin/ruby
 
 require 'net/http'
+require 'openssl'
 require 'uri'
 require 'gdbm'
 require 'time'
+require 'syslog'
 require 'rexml/parsers/baseparser'
 require 'rexml/parsers/streamparser'
 require 'rexml/streamlistener'
@@ -15,6 +17,14 @@ class WGet
   def initialize
     @conn = nil
     @resp = nil
+    @ca = nil
+    $logger = Syslog.open('feedtore', Syslog::LOG_PID, Syslog::LOG_NEWS)
+    $onset = Time.now
+    @n = Hash.new(0)
+  end
+
+  def ca= val
+    @ca = val
   end
 
   def connect(uri)
@@ -23,8 +33,20 @@ class WGet
       return 0 if  @conn.address == uri.host and @conn.port == uri.port
       @conn.finish
     end
-    STDERR.puts "CONNECT #{uri.host}:#{uri.port}" if $VERBOSE
-    @conn = Net::HTTP.start(uri.host, uri.port, :ENV)
+    STDERR.puts "#CONNECT #{uri.host}:#{uri.port}" if $VERBOSE
+    @conn = Net::HTTP.new(uri.host, uri.port, :ENV)
+    @conn.use_ssl = true unless uri.port == 80
+    if @ca
+      if /\/$/ === @ca then
+        @conn.ca_path = @ca
+      else
+        @conn.ca_file = @ca
+      end
+    else
+      STDERR.puts "Warning: server certificate not verified"
+      @conn.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
+    @conn.start
   end
 
   def get(uri, lmt = nil)
@@ -37,8 +59,10 @@ class WGet
       hdr['if-modified-since'] = lmt
     end
     @resp = @conn.get2(path, hdr)
-    STDERR.puts "--> #{@resp.code}" if $VERBOSE
-    @resp.code
+    rc = @resp.code
+    STDERR.puts "--> #{rc}" if $VERBOSE
+    @n[rc] += 1
+    rc
   end
 
   def body
@@ -50,7 +74,9 @@ class WGet
   end
 
   def close
-    @conn.finish if @conn
+    @conn.finish if @conn and @conn.started?
+    $logger.info('elapsed %g wget %s', Time.now - $onset, @n.inspect)
+    $logger.close
   end
 
 end
@@ -93,16 +119,18 @@ end
 class FeedStore
 
   def help
-    puts "#$0 rtdb outfnam feedurl ..."
+    puts "#$0 rtdb outfnam ca feedurl ..."
     exit 1
   end
 
   def initialize argv
     @rtdb = argv.shift
     @outfnam = argv.shift
+    ca = argv.shift
     @feeds = argv
     help if @feeds.empty?
     @wget = WGet.new
+    @wget.ca = ca
     @dfilter = nil
   end
 
