@@ -12,9 +12,6 @@ CONFIG
 fi
 : ${bindir:?} ${priv:?}
 
-target="run-*.sh syndl.rb"
+target="run-*.sh syndl.rb feedstore.rb"
 
-for f in $target
-do
-  sudo -u $priv install -m 0755 $target $bindir
-done
+sudo -u $priv install -m 0755 $target $bindir

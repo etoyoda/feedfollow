@@ -6,7 +6,7 @@ PATH=/bin:/usr/bin
 
 : ${ruby:=/usr/bin/ruby}
 : ${syndl:=${prefix}/bin/syndl.rb}
-: ${feeddir:='http://www.data.jma.go.jp/developer/xml/feed/'}
+: ${feeddir:='http://www.data.jma.go.jp/developer/xml/feed'}
 : ${ca:='--ca=/etc/ssl/certs/'}
 
 if tty -s; then
@@ -15,5 +15,6 @@ fi
 
 set -e
 
-$ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} $feeddir/extra.xml
+$ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} \
+  "${feeddir}/regular.xml" "${feeddir}/extra.xml" "${feeddir}/eqvol.xml" "${feeddir}/other.xml"
 
