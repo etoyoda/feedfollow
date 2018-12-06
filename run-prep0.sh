@@ -25,10 +25,10 @@ if [ X"${incomplete}" != X"${datedir}" ]; then
   if [ -d "${incomplete}" ]; then
     yesterday="`basename $incomplete .new`"
     mv -f "${incomplete}" "${yesterday}"
-    ln -fs "${yesterday}" latest
+    rm -f latest && ln -s "${yesterday}" latest
     logger --id=$$ -p news.info "latest -> ${yesterday}, incomplete -> ${datedir}"
   fi
-  ln -fs ${datedir} incomplete
+  rm -f incomplete && ln -s ${datedir} incomplete
 fi
 cd ${datedir}
 
