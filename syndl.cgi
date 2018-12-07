@@ -36,6 +36,53 @@ class Time
   end
 end
 
+class TarReader
+
+  def initialize fnam
+    @fp = File.open(fnam, "rb")
+    @fp.set_encoding('BINARY')
+  end
+
+  def each
+    zeroblk = "\0" * 512
+    nskip = 0
+    while true
+      pos = @fp.pos
+      bpos = pos / 512
+      blk = @fp.read(512)
+      break if blk.nil?
+      if blk == zeroblk then
+        nskip += 1
+        break if nskip >= 2
+        next
+      end
+      # check the header
+      hdr = blk[0, 500]
+      magic = hdr[257, 5]
+      cksum = hdr[148, 8].unpack('A*').first.to_i(8)
+      hdr[148, 8] = ' ' * 8
+      s = 0
+      hdr.each_byte{|c| s += c}
+      if s != cksum
+        raise Errno::EPERM, sprintf("%d: checksum %d != %d\n", bpos, cksum, s)
+      else
+        bsize = size = hdr[124, 12].unpack('A*').first.to_i(8)
+        size -= 1
+        size -= size % 512
+        size += 512
+        body = @fp.read(bsize)
+        @fp.read(size - bsize)
+        yield(body)
+      end
+  end
+
+  def close
+    @fp.close
+    @fp = nil
+  end
+
+end
+
 module DataSpool
 class App
 
@@ -119,7 +166,7 @@ class App
     tnow = check_hims
     dbdir = "/nwp/p0"
     require 'html_builder'
-    d = HTMLBuilder.new('syndl: ')
+    d = HTMLBuilder.new("syndl: history - #{dsname}")
     d.header('lang', 'en')
     d.tag('h1') { d.puts("dataset history - #{dsname}") }
     cols = ['Dataset', 'Today\'s Size', 'Last Modified']
@@ -157,7 +204,52 @@ class App
       "", body ].join("\r\n")
   end
 
-  def path_entry uri
+  def path_list datedir, dsname, offset = "0"
+    tnow = check_hims
+    dbdir = "/nwp/p0"
+    require 'html_builder'
+    offset = offset.to_i
+    ymd = datedir.sub(/\.new$/, '')
+    d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd}")
+    d.header('lang', 'en')
+    d.tag('h1') { d.puts("data list - #{dsname} #{ymd}") }
+    cols = ['Message-ID', 'Size', 'Arrival Time']
+    insmax = Time.gm(1900, 1, 1)
+    tarfile = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+    d.table(cols) {
+      Dir.foreach(dbdir) {|datedir|
+        next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
+        ymd = $1
+        path = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+        begin
+          stat = File.stat(path)
+        rescue Errno::ENOENT
+          next
+        end
+        insmax = stat.mtime if stat.mtime > insmax
+        d.tag("tr") {
+          d.tag('td') {
+            href = File.join(myname, "list", datedir, dsname)
+            d.tag('a', 'href'=>href) { d.puts ymd }
+            d.puts " (incomplete)" if /\.new/ === datedir
+          }
+          d.tag('td') { d.puts "#{stat.size / 1.0e6} MB" }
+          d.tag('td') { d.puts stat.mtime.xmlstr }
+        }
+      }
+    }
+    d.tag('hr')
+    d.tag('p') { d << "Last-Modified: " + insmax.xmlstr }
+    xpr = (tnow.utc + 60)
+    body = d.to_s
+    return [ "Expires: #{xpr.rfc1123}",
+      "Last-Modified: #{insmax.rfc1123}",
+      "Content-Type: text/html; charset=utf-8",
+      "Content-Length: #{body.bytesize}",
+      "", body ].join("\r\n")
+  end
+
+  def path_entry date, uri
     raise Errno::EAGAIN, "#{myname}/entry/#{uri}" if ENV['HTTP_IF_MODIFIED_SINCE']
     upd, body = nil
     database {|db|
@@ -178,12 +270,10 @@ class App
 
   def getmethod
     case @path
-    when %r{^/index\.html?$}
-      path_index
-    when %r{^/hist/}
-      path_hist($')
-    when %r{^/entry/}
-      path_entry($')
+    when %r{^/index\.html?$} then path_index
+    when %r{^/hist/(\w+)$} then path_hist($1)
+    when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/(\w+)(?:/(\d+))?$} then path_list($1, $2, $3)
+    when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-.\w]+)$} then path_entry($1, $2)
     else
       url = "#{myname}/index.html"
       "Status: 302 Found\r\nLocation: #{url}\r\n\r\n#{url}"
