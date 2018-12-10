@@ -74,6 +74,7 @@ class TarReader
         @fp.read(size - bsize)
         yield(body)
       end
+    end
   end
 
   def close
@@ -159,7 +160,8 @@ class App
       "Last-Modified: #{insmax.rfc1123}",
       "Content-Type: text/html; charset=utf-8",
       "Content-Length: #{body.bytesize}",
-      "", body ].join("\r\n")
+      "", body
+      ].join("\r\n")
   end
 
   def path_hist dsname
