@@ -132,6 +132,7 @@ class FeedStore
     @wget = WGet.new
     @wget.ca = ca
     @dfilter = nil
+    @feedtar = nil
   end
 
   def getlmt(feed)
@@ -154,6 +155,9 @@ class FeedStore
     }
   end
 
+  def tmpnam(feed)
+    feed.split(/\//).compact.last + Time.now.utc.strftime('-%Y-%m-%dT%H%M%S') + "-#{$$}.xml"
+  end
 
   def getfeed(idb, tar, feed)
     lmt = getlmt(feed)
@@ -166,6 +170,7 @@ class FeedStore
     end
     fbdy = @wget.body
     lmt2 = @wget.lmt
+    @feedtar.add(tmpnam(feed), fbdy)
     # @wget can be reused now
     li = AtomParse.new { |rec|
       STDERR.puts rec.inspect if $VERBOSE
@@ -197,6 +202,7 @@ class FeedStore
   def run
     idx = "#{@outfnam}.idx1"
     GDBM.open(idx, 0644, GDBM::WRCREAT) {|idb|
+      @feedtar = TarWriter.open("#{@outfnam}-feed.tar", "a");
       TarWriter.open("#{@outfnam}.tar", 'a') {|tar|
         @feeds.each {|feed|
           case feed
@@ -210,7 +216,8 @@ class FeedStore
         }
       }
     }
-    ensure
+  ensure
+    @feedtar.close if @feedtar
     @wget.close
   end
 
