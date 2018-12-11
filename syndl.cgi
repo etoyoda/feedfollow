@@ -203,10 +203,16 @@ class App
       io.close if do_gunzip
     }
     d.tag('p') {
+      toplink = File.join(myname, "index.html")
+      d.puts ' '
+      d.tag('a', 'href'=>toplink) { d.puts "Datasets" }
+      histlink = File.join(myname, "hist", dsname)
+      d.puts ' '
+      d.tag('a', 'href'=>histlink) { d.puts "History" }
       if offset > @pagesize then
-        toplink = File.join(myname, "list", datedir, dsname, "0")
+        firstlink = File.join(myname, "list", datedir, dsname, "0")
         d.puts ' '
-        d.tag('a', 'href'=>toplink) { d.puts "First #@pagesize" }
+        d.tag('a', 'href'=>firstlink) { d.puts "First #@pagesize" }
       end
       if offset >= @pagesize then
         prevlink = File.join(myname, "list", datedir, dsname, String(offset - @pagesize))
@@ -251,23 +257,50 @@ class App
       "", body ].join("\r\n")
   end
 
-  def path_entry date, uri
-    tnow = check_hims(86400 * 365)
-    upd, body = nil
-    database {|db|
-      sql = "SELECT upd, body FROM msgs WHERE uri = ?"
-      st = db.prepare(sql)
-      begin
-        st.execute(uri)
-        upd, body = st.fetch
-      ensure
-        st.close
-      end
+  def path_entry datedir, dsname, msgid
+    tnow = check_hims(86400 * 10)
+    require 'archive/tar/minitar'
+    require 'html_builder'
+    ymd = datedir.sub(/\.new$/, '')
+    tarfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
+    do_gunzip = false
+    begin
+      tarstat = File.stat(tarfile)
+    rescue Errno::ENOENT
+      require 'zlib'
+      do_gunzip = true
+      tarfile += '.gz'
+      tarstat = File.stat(tarfile)
+    end
+    body = nil
+    upd = nil
+    File.open(tarfile, 'rb') {|fp|
+      fp.set_encoding('BINARY')
+      io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
+      Archive::Tar::Minitar::Reader.open(io) { |tar|
+        tar.each_entry {|ent|
+          next unless ent.name == msgid
+          body = ent.read
+          upd = Time.at(ent.mtime).utc
+        }
+      }
     }
-    raise Errno::ENOENT, "uri #{uri} not found" unless body
-    upd = Time.parse(upd).rfc1123
-    xpr = (Time.now.utc + 86400 * 2).rfc1123
-    "Expires:#{xpr}\r\nLast-Modified: #{upd}\r\nContent-Type: application/xml\r\n\r\n" + body.to_s
+    raise Errno::ENOENT, "file #{msgid} not found" unless body
+    xpr = (Time.now.utc + 86400 * 2)
+    ctype = case msgid
+      when /\.txt$/ then 'text/plain'
+      when /\.bufr$/ then 'application/x-bufr' # Source: http://wis.wmo.int/doc=2343
+      when /\.grib$/ then 'application/x-grib' # Source: http://wis.wmo.int/doc=2343
+      when /\.nc$/ then 'application/netcdf' # Source: http://wis.wmo.int/doc=2343
+      when /\.xml$/ then 'text/xml; charset=utf-8'
+      when /^urn:uuid:[-0-9a-f]+$/ then 'text/xml; charset=utf-8'
+      else 'application/octet-stream'
+      end
+    return [ "Expires: #{xpr.rfc1123}",
+      "Last-Modified: #{upd.rfc1123}",
+      "Content-Type: #{ctype}",
+      "Content-Length: #{body.bytesize}",
+      "", body ].join("\r\n")
   end
 
   def getmethod
@@ -275,7 +308,7 @@ class App
     when %r{^/index\.html?$} then path_index
     when %r{^/hist/([-\w]+)$} then path_hist($1)
     when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)(?:/(\d+))?$} then path_list($1, $2, $3)
-    when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)/([-.\w]+)$} then path_entry($1, $2, $3)
+    when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)/([-.:\w]+)$} then path_entry($1, $2, $3)
     else
       url = "#{myname}/index.html"
       "Status: 302 Found\r\nLocation: #{url}\r\n\r\n#{url}"
