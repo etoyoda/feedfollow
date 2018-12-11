@@ -44,6 +44,7 @@ class App
     @path = ENV['PATH_INFO'].to_s
     @reqbody = nil
     @myname = myname
+    @dbdir = '/nwp/p0'
   end
 
   def myname
@@ -67,7 +68,7 @@ class App
 
   def path_index
     tnow = check_hims
-    dbdir = "/nwp/p0/incomplete"
+    latest_dir = File.join(@dbdir, 'incomplete')
     require 'html_builder'
     d = HTMLBuilder.new('syndl: dataset list')
     d.header('lang', 'en')
@@ -75,10 +76,10 @@ class App
     cols = ['Dataset', 'Today\'s Size', 'Last Modified']
     insmax = Time.gm(1900, 1, 1)
     d.table(cols) {
-      Dir.foreach(dbdir) {|fnam|
+      Dir.foreach(latest_dir) {|fnam|
         next unless /^(\w.*)-\d\d\d\d-\d\d-\d\d\.tar$/ === fnam
         dsname = $1
-        stat = File.stat(File.join(dbdir, fnam))
+        stat = File.stat(File.join(latest_dir, fnam))
         insmax = stat.mtime if stat.mtime > insmax
         d.tag("tr") {
           d.tag('td') {
@@ -104,7 +105,6 @@ class App
 
   def path_hist dsname
     tnow = check_hims
-    dbdir = "/nwp/p0"
     require 'html_builder'
     d = HTMLBuilder.new("syndl: history - #{dsname}")
     d.header('lang', 'en')
@@ -112,10 +112,10 @@ class App
     cols = ['Dataset', 'Today\'s Size', 'Last Modified']
     insmax = Time.gm(1900, 1, 1)
     database = []
-    Dir.foreach(dbdir) {|datedir|
+    Dir.foreach(@dbdir) {|datedir|
       next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
       ymd = $1
-      path = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+      path = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
       begin
         stat = File.stat(path)
       rescue Errno::ENOENT
@@ -159,21 +159,21 @@ class App
   def path_list datedir, dsname, offset = "0"
     tnow = check_hims
     offset = offset.to_i
-    dbdir = "/nwp/p0"
+    require 'zlib'
+    require 'minitar'
     require 'html_builder'
-
     ymd = datedir.sub(/\.new$/, '')
     d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd}")
     d.header('lang', 'en')
     d.tag('h1') { d.puts("data list - #{dsname} #{ymd}") }
     cols = ['Message-ID', 'Size', 'Arrival Time']
     insmax = Time.gm(1900, 1, 1)
-    tarfile = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+    tarfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
     d.table(cols) {
-      Dir.foreach(dbdir) {|datedir|
+      Dir.foreach(@dbdir) {|datedir|
         next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
         ymd = $1
-        path = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+        path = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
         begin
           stat = File.stat(path)
         rescue Errno::ENOENT
