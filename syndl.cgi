@@ -156,38 +156,55 @@ class App
       "", body ].join("\r\n")
   end
 
-  def path_list datedir, dsname, offset = "0"
+  def path_list datedir, dsname, offset = 0
     tnow = check_hims
     offset = offset.to_i
-    require 'zlib'
-    require 'minitar'
+    require 'archive/tar/minitar'
     require 'html_builder'
     ymd = datedir.sub(/\.new$/, '')
     d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd}")
     d.header('lang', 'en')
     d.tag('h1') { d.puts("data list - #{dsname} #{ymd}") }
     cols = ['Message-ID', 'Size', 'Arrival Time']
-    insmax = Time.gm(1900, 1, 1)
     tarfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
+    do_gunzip = false
+    begin
+      tarstat = File.stat(tarfile)
+    rescue Errno::ENOENT
+      require 'zlib'
+      do_gunzip = true
+      tarfile += '.gz'
+      tarstat = File.stat(tarfile)
+    end
+    insmax = tarstat.mtime
+    database = []
+    File.open(tarfile, 'rb') {|fp|
+      fp.set_encoding('BINARY')
+      io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
+      Archive::Tar::Minitar::Reader.open(io) { |tar|
+        tar.each_entry {|ent|
+          offset -= 1
+          next if offset >= 0
+          row = { :name => ent.name, :size => ent.size, :mtime => ent.mtime }
+          database.push(row)
+          break if database.size > 50
+        }
+      }
+      io.close if do_gunzip
+    }
     d.table(cols) {
-      Dir.foreach(@dbdir) {|datedir|
-        next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
-        ymd = $1
-        path = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
-        begin
-          stat = File.stat(path)
-        rescue Errno::ENOENT
-          next
-        end
-        insmax = stat.mtime if stat.mtime > insmax
+      database.each {|row|
         d.tag("tr") {
           d.tag('td') {
-            href = File.join(myname, "list", datedir, dsname)
-            d.tag('a', 'href'=>href) { d.puts ymd }
-            d.puts " (incomplete)" if /\.new/ === datedir
+            href = File.join(myname, "entry", datedir, dsname, row[:name])
+            d.tag('a', 'href'=>href) { d.puts row[:name] }
           }
-          d.tag('td') { d.puts sprintf('%.3f MB', stat.size / 1.0e6) }
-          d.tag('td') { d.puts stat.mtime.xmlstr }
+          ssize = if row[:size] > 32_000
+            then sprintf('%.3f MB', row[:size] / 1.0e6)
+            else sprintf('%.3f kB', row[:size] / 1.0e3)
+            end
+          d.tag('td') { d.puts ssize }
+          d.tag('td') { d.puts Time.at(row[:mtime]).utc.xmlstr }
         }
       }
     }
