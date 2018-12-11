@@ -36,90 +36,28 @@ class Time
   end
 end
 
-class TarReader
-
-  def initialize fnam
-    @fp = File.open(fnam, "rb")
-    @fp.set_encoding('BINARY')
-  end
-
-  def each
-    zeroblk = "\0" * 512
-    nskip = 0
-    while true
-      pos = @fp.pos
-      bpos = pos / 512
-      blk = @fp.read(512)
-      break if blk.nil?
-      if blk == zeroblk then
-        nskip += 1
-        break if nskip >= 2
-        next
-      end
-      # check the header
-      hdr = blk[0, 500]
-      magic = hdr[257, 5]
-      cksum = hdr[148, 8].unpack('A*').first.to_i(8)
-      hdr[148, 8] = ' ' * 8
-      s = 0
-      hdr.each_byte{|c| s += c}
-      if s != cksum
-        raise Errno::EPERM, sprintf("%d: checksum %d != %d\n", bpos, cksum, s)
-      else
-        bsize = size = hdr[124, 12].unpack('A*').first.to_i(8)
-        size -= 1
-        size -= size % 512
-        size += 512
-        body = @fp.read(bsize)
-        @fp.read(size - bsize)
-        yield(body)
-      end
-    end
-  end
-
-  def close
-    @fp.close
-    @fp = nil
-  end
-
-end
-
 module DataSpool
 class App
 
   def initialize
     @method = ENV['REQUEST_METHOD'].to_s
-    @qstr = ENV['QUERY_STRING'].to_s
     @path = ENV['PATH_INFO'].to_s
-    @addr = ENV['REMOTE_ADDR'].to_s
-    @ctype = ENV['CONTENT_TYPE'].to_s
-    @clen = ENV['CONTENT_LENGTH']
-    @clen = @clen.to_i if @clen
     @reqbody = nil
-  end
-
-  def database
-    db = Mysql.connect(STORAGE[:srv], STORAGE[:usr], STORAGE[:pwd], STORAGE[:db])
-    begin
-      yield db
-    ensure
-      db.close
-    end
+    @myname = myname
   end
 
   def myname
+    return @myname if @myname
     host = ENV['SERVER_NAME'] || 'localhost'
     port = ENV['SERVER_PORT'] || '80'
     script = ENV['SCRIPT_NAME']
-    url = "//#{host}:#{port}#{script}"
-    # hook to be here
-    url
+    "//#{host}:#{port}#{script}"
   end
 
-  def check_hims tnow = Time.now
+  def check_hims span = 60, tnow = Time.now
     if hims = ENV['HTTP_IF_MODIFIED_SINCE'] then
       STDERR.puts "HIMS #{hims.inspect}" if $DEBUG
-      t = Time.parse(hims) + 60
+      t = Time.parse(hims) + span
       STDERR.puts "CMP t=#{t} tnow=#{tnow}" if $DEBUG
       raise Errno::EAGAIN, File.join(myname, @path) if t > tnow
       STDERR.puts "CMP PASSTHRU" if $DEBUG
@@ -147,7 +85,7 @@ class App
             href = File.join(myname, "hist", dsname)
             d.tag('a', 'href'=>href) { d.puts dsname }
           }
-          d.tag('td') { d.puts "#{stat.size / 1.0e6} MB" }
+          d.tag('td') { d.puts sprintf('%.3f MB', stat.size / 1.0e6) }
           d.tag('td') { d.puts stat.mtime.xmlstr }
         }
       }
@@ -173,30 +111,37 @@ class App
     d.tag('h1') { d.puts("dataset history - #{dsname}") }
     cols = ['Dataset', 'Today\'s Size', 'Last Modified']
     insmax = Time.gm(1900, 1, 1)
-    d.table(cols) {
-      Dir.foreach(dbdir) {|datedir|
-        next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
-        ymd = $1
-        path = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+    database = []
+    Dir.foreach(dbdir) {|datedir|
+      next unless /^(\d\d\d\d-\d\d-\d\d)(?:\.new)?$/ === datedir
+      ymd = $1
+      path = File.join(dbdir, datedir, "#{dsname}-#{ymd}.tar")
+      begin
+        stat = File.stat(path)
+      rescue Errno::ENOENT
+        path += ".gz"
         begin
           stat = File.stat(path)
         rescue Errno::ENOENT
-          path += ".gz"
-          begin
-            stat = File.stat(path)
-          rescue Errno::ENOENT
-            next
-          end
+          next
         end
-        insmax = stat.mtime if stat.mtime > insmax
+      end
+      insmax = stat.mtime if stat.mtime > insmax
+      href = File.join(myname, "list", datedir, dsname)
+      row = { :href => href, :ymd => ymd, :stat => stat }
+      row[:ymdplus] = " (incomplete)" if /\.new/ === datedir
+      database.push row
+    }
+    database.sort! {|a,b| a[:ymd] <=> b[:ymd] }
+    d.table(cols) {
+      database.each {|row|
         d.tag("tr") {
           d.tag('td') {
-            href = File.join(myname, "list", datedir, dsname)
-            d.tag('a', 'href'=>href) { d.puts ymd }
-            d.puts " (incomplete)" if /\.new/ === datedir
+            d.tag('a', 'href'=>row[:href]) { d.puts row[:ymd] }
+            d.puts row[:ymdplus] if row[:ymdplus]
           }
-          d.tag('td') { d.puts "#{stat.size / 1.0e6} MB" }
-          d.tag('td') { d.puts stat.mtime.xmlstr }
+          d.tag('td') { d.puts sprintf('%.3f MB', row[:stat].size / 1.0e6) }
+          d.tag('td') { d.puts row[:stat].mtime.xmlstr }
         }
       }
     }
@@ -213,9 +158,10 @@ class App
 
   def path_list datedir, dsname, offset = "0"
     tnow = check_hims
+    offset = offset.to_i
     dbdir = "/nwp/p0"
     require 'html_builder'
-    offset = offset.to_i
+
     ymd = datedir.sub(/\.new$/, '')
     d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd}")
     d.header('lang', 'en')
@@ -240,7 +186,7 @@ class App
             d.tag('a', 'href'=>href) { d.puts ymd }
             d.puts " (incomplete)" if /\.new/ === datedir
           }
-          d.tag('td') { d.puts "#{stat.size / 1.0e6} MB" }
+          d.tag('td') { d.puts sprintf('%.3f MB', stat.size / 1.0e6) }
           d.tag('td') { d.puts stat.mtime.xmlstr }
         }
       }
@@ -257,7 +203,7 @@ class App
   end
 
   def path_entry date, uri
-    raise Errno::EAGAIN, "#{myname}/entry/#{uri}" if ENV['HTTP_IF_MODIFIED_SINCE']
+    tnow = check_hims(86400 * 365)
     upd, body = nil
     database {|db|
       sql = "SELECT upd, body FROM msgs WHERE uri = ?"
