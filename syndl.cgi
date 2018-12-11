@@ -271,8 +271,8 @@ class App
   def getmethod
     case @path
     when %r{^/index\.html?$} then path_index
-    when %r{^/hist/(\w+)$} then path_hist($1)
-    when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/(\w+)(?:/(\d+))?$} then path_list($1, $2, $3)
+    when %r{^/hist/([-\w]+)$} then path_hist($1)
+    when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)(?:/(\d+))?$} then path_list($1, $2, $3)
     when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-.\w]+)$} then path_entry($1, $2)
     else
       url = "#{myname}/index.html"

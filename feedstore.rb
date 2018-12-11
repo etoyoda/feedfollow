@@ -202,7 +202,7 @@ class FeedStore
   def run
     idx = "#{@outfnam}.idx1"
     GDBM.open(idx, 0644, GDBM::WRCREAT) {|idb|
-      @feedtar = TarWriter.open("#{@outfnam}-feed.tar", "a");
+      @feedtar = TarWriter.open("feed-#{@outfnam}.tar", "a");
       TarWriter.open("#{@outfnam}.tar", 'a') {|tar|
         @feeds.each {|feed|
           case feed
