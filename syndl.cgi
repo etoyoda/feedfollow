@@ -159,7 +159,9 @@ class App
   end
 
   def path_list datedir, dsname, offset = 0
-    tnow = check_hims
+    ttl = 86400
+    ttl = 60 if /\.new$/ === datedir
+    tnow = check_hims(ttl)
     offset = offset.to_i
     require 'archive/tar/minitar'
     require 'html_builder'
@@ -273,7 +275,7 @@ class App
     when %r{^/index\.html?$} then path_index
     when %r{^/hist/([-\w]+)$} then path_hist($1)
     when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)(?:/(\d+))?$} then path_list($1, $2, $3)
-    when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-.\w]+)$} then path_entry($1, $2)
+    when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)/([-.\w]+)$} then path_entry($1, $2, $3)
     else
       url = "#{myname}/index.html"
       "Status: 302 Found\r\nLocation: #{url}\r\n\r\n#{url}"
