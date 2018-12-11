@@ -44,7 +44,9 @@ class App
     @path = ENV['PATH_INFO'].to_s
     @reqbody = nil
     @myname = myname
+    #config
     @dbdir = '/nwp/p0'
+    @pagesize = 25
   end
 
   def myname
@@ -127,7 +129,7 @@ class App
         end
       end
       insmax = stat.mtime if stat.mtime > insmax
-      href = File.join(myname, "list", datedir, dsname)
+      href = File.join(myname, "list", datedir, dsname, '0')
       row = { :href => href, :ymd => ymd, :stat => stat }
       row[:ymdplus] = " (incomplete)" if /\.new/ === datedir
       database.push row
@@ -162,9 +164,9 @@ class App
     require 'archive/tar/minitar'
     require 'html_builder'
     ymd = datedir.sub(/\.new$/, '')
-    d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd}")
+    d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd} offset #{offset}")
     d.header('lang', 'en')
-    d.tag('h1') { d.puts("data list - #{dsname} #{ymd}") }
+    d.tag('h1') { d.puts("data list - #{dsname} #{ymd} offset #{offset}") }
     cols = ['Message-ID', 'Size', 'Arrival Time']
     tarfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
     do_gunzip = false
@@ -178,20 +180,36 @@ class App
     end
     insmax = tarstat.mtime
     database = []
+    nextlink = nil
     File.open(tarfile, 'rb') {|fp|
       fp.set_encoding('BINARY')
       io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
+      iskip = offset
       Archive::Tar::Minitar::Reader.open(io) { |tar|
         tar.each_entry {|ent|
-          offset -= 1
-          next if offset >= 0
+          iskip -= 1
+          next if iskip >= 0
+          # same as "LIMIT pagesize + 1" in SQL
+          if database.size > @pagesize then
+            nextlink = File.join(myname, "list", datedir, dsname, String(offset + @pagesize))
+            next
+          end
           row = { :name => ent.name, :size => ent.size, :mtime => ent.mtime }
           database.push(row)
-          break if database.size > 50
         }
       }
       io.close if do_gunzip
     }
+    d.tag('p') {
+      if offset >= @pagesize then
+        prevlink = File.join(myname, "list", datedir, dsname, String(offset - @pagesize))
+        d.tag('a', 'href'=>prevlink) { d.puts "Prev #@pagesize" }
+      end
+      if nextlink then
+        d.tag('a', 'href'=>nextlink) { d.puts "Next #@pagesize" }
+      end
+    }
+    d.tag('hr')
     d.table(cols) {
       database.each {|row|
         d.tag("tr") {
