@@ -181,7 +181,12 @@ class App
         begin
           stat = File.stat(path)
         rescue Errno::ENOENT
-          next
+          path += ".gz"
+          begin
+            stat = File.stat(path)
+          rescue Errno::ENOENT
+            next
+          end
         end
         insmax = stat.mtime if stat.mtime > insmax
         d.tag("tr") {
