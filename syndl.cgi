@@ -181,10 +181,10 @@ class App
     insmax = tarstat.mtime
     database = []
     nextlink = nil
+    iskip = offset
     File.open(tarfile, 'rb') {|fp|
       fp.set_encoding('BINARY')
       io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
-      iskip = offset
       Archive::Tar::Minitar::Reader.open(io) { |tar|
         tar.each_entry {|ent|
           iskip -= 1
@@ -201,16 +201,28 @@ class App
       io.close if do_gunzip
     }
     d.tag('p') {
+      if offset > @pagesize then
+        toplink = File.join(myname, "list", datedir, dsname, "0")
+        d.puts ' '
+        d.tag('a', 'href'=>toplink) { d.puts "First #@pagesize" }
+      end
       if offset >= @pagesize then
         prevlink = File.join(myname, "list", datedir, dsname, String(offset - @pagesize))
+        d.puts ' '
         d.tag('a', 'href'=>prevlink) { d.puts "Prev #@pagesize" }
       end
       if nextlink then
+        d.puts ' '
         d.tag('a', 'href'=>nextlink) { d.puts "Next #@pagesize" }
       end
     }
     d.tag('hr')
     d.table(cols) {
+      if iskip >= 0 then
+        d.tag("tr") {
+          d.tag("td", "colspan"=>"3") { d.puts "End of file reached" }
+        }
+      end
       database.each {|row|
         d.tag("tr") {
           d.tag('td') {
