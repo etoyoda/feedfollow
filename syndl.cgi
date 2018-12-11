@@ -189,7 +189,7 @@ class App
         tar.each_entry {|ent|
           iskip -= 1
           next if iskip >= 0
-          # same as "LIMIT pagesize + 1" in SQL
+          # drops the last row, same as "LIMIT pagesize + 1" in SQL
           if database.size > @pagesize then
             nextlink = File.join(myname, "list", datedir, dsname, String(offset + @pagesize))
             next
