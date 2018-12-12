@@ -6,32 +6,37 @@ TZ=UTC; export TZ
 set -e
 
 : ${phase:=p0}
-: ${prefix:=/nwp}
+: ${prefix:=${HOME}/nwp-test}
 : ${base:=${prefix}/${phase}}
 # simply using wall-clock time in UTC
 : ${reftime:=`date +%Y-%m-%d`}
-: ${datedir:="${base}/${reftime}.new"}
+
+datedir="${base}/${reftime}.new"
+export phase base reftime datedir prefix
 
 test -f "$1"
 
-export phase base reftime datedir prefix
-
-mkdir -p ${datedir}
 cd ${base}
 # aborts by -e if prefix or base is ill-configured
 
-incomplete="`readlink incomplete || :`"
-if [ X"${incomplete}" != X"${datedir}" ]; then
-  if [ -d "${incomplete}" ]; then
-    yesterday="`basename $incomplete .new`"
-    mv -f "${incomplete}" "${yesterday}"
-    rm -f latest
-    ln -s "${yesterday}" latest
-    logger --tag run-prep --id=$$ -p news.info "latest -> ${yesterday}, incomplete -> ${datedir}"
-  fi
-  rm -f incomplete
-  ln -s ${datedir} incomplete
+if test -f stop ; then
+  logger --tag run-prep --id=$$ -p news.err "suspended - remove ${base}/stop"
+  false
 fi
+
+if mkdmsg=$(mkdir ${datedir} 2>&1)
+then
+  incomplete=$(readlink incomplete || echo missing)
+  yesterday=$(basename $incomplete .new)
+  if [ -d "${incomplete}" ]; then
+    mv -f "${incomplete}" "${yesterday}"
+    ln -Tfs "${yesterday}" latest
+    logger --tag run-prep --id=$$ -p news.info "latest -> ${yesterday}, incomplete -> ${datedir}"
+    gzip ${yesterday}/*-${yesterday}.tar
+  fi
+  ln -Tfs ${reftime}.new incomplete
+fi
+
 cd ${datedir}
 
 bash -$- "$@"
