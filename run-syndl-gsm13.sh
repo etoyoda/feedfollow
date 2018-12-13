@@ -15,10 +15,16 @@ fi
 
 set -e
 
+rc=0
 $ruby $syndl ${datedir}/gsm13-etag.db ${datedir}/gsm13-log.db \
   --tar=gsm13-${reftime}.tar $ca --tag=gsm13 \
   --reject='2.5.2.5' \
   --match='Surface|Mean.sea.level|925hPa|850hPa|700hPa|500hPa|300hPa|250hPa|30hPa' \
-  "${app}&Type=GRIB&Indicator=RJTD"
+  "${app}&Type=GRIB&Indicator=RJTD" || rc=$?
 
-exit 0
+if (( $rc >= 128 )) ; then
+  logger --tag syndl.gsm13 --id=$$ -p news.err -s -- "killed rc=$rc"
+  cat /proc/meminfo
+fi
+
+exit $rc
