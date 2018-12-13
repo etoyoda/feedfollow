@@ -195,7 +195,11 @@ class FeedStore
         idb[id] = pos.to_s
       end
     }
-    REXML::Parsers::StreamParser.new(fbdy, li).parse
+    begin
+      REXML::Parsers::StreamParser.new(fbdy, li).parse
+    rescue REXML::ParseException => e
+      $logger.err('feed %s - %s', feed, e.message)
+    end
     setlmt(feed, lmt2)
   end
 
