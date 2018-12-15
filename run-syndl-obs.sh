@@ -15,23 +15,36 @@ fi
 
 set -e
 
-$ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
+rc=0 && $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
   --tar=obsan-${reftime}.tar $ca --tag=obsan \
   --match='TEMP|PILOT|AIREP|AMDAR|PIREP' \
   "${app}&Type=Alphanumeric&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
   "${app}&Type=Alphanumeric&Category=Surface" \
-  --match='' "${app}&Type=Alphanumeric&Subcategory=CLIMAT"
+  --match='' "${app}&Type=Alphanumeric&Subcategory=CLIMAT" \
+  || rc=$?
+
+if (( $rc >= 128 )) ; then
+  logger --tag syndl.obsan --id=$$ -p news.err -s -- "killed rc=$rc"
+  cat /proc/meminfo
+  exit $rc
+fi
 
 sleep 1
 
-$ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
+rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
   --tar=obsbf-${reftime}.tar $ca --tag=obsbf \
   --match='TEMP|PILOT' \
   "${app}&Type=BUFR&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
   "${app}&Type=BUFR&Category=Surface" \
   --match='A_IU(PC[45]|[KS]C[67])[0-9]RJTD' \
-  "${app}&Type=BUFR&Category=Empty+or+Invalid" 
+  "${app}&Type=BUFR&Category=Empty+or+Invalid" \
+  || rc=$?
+if (( $rc >= 128 )) ; then
+  logger --tag syndl.obsbf --id=$$ -p news.err -s -- "killed rc=$rc"
+  cat /proc/meminfo
+  exit $rc
+fi
 
 exit 0

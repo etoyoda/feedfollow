@@ -15,6 +15,13 @@ fi
 
 set -e
 
-$ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
-  "${feeddir}/regular.xml" "${feeddir}/extra.xml" "${feeddir}/eqvol.xml" "${feeddir}/other.xml"
+rc=0 && $ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
+  "${feeddir}/regular.xml" "${feeddir}/extra.xml" \
+  "${feeddir}/eqvol.xml" "${feeddir}/other.xml" \
+  || rc=$?
 
+if (( $rc >= 128 )) ; then
+  logger --tag feedstore --id=$$ -p news.err -s -- "killed rc=$rc"
+  cat /proc/meminfo
+fi
+exit $rc
