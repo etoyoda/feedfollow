@@ -191,8 +191,11 @@ class FeedStore
         @wget.get(umsg)
         body = @wget.body
         STDERR.puts "size #{body.size}" if $VERBOSE
-        pos = tar.add(id, body)
+        t = Time.now.utc
+        pos = tar.add(id, body, t)
         idb[id] = pos.to_s
+        m = t.strftime('m/%Y-%m-%dT%H%M')
+        idb[m] = [String(idb[m]), id, " "].join
       end
     }
     begin
