@@ -24,7 +24,6 @@ $ruby $syndl ${datedir}/gsm13-etag.db ${datedir}/gsm13-log.db \
 
 if (( $rc >= 128 )) ; then
   logger --tag syndl.gsm13 --id=$$ -p news.err -s -- "killed rc=$rc"
-  cat /proc/meminfo
 fi
 
 exit $rc

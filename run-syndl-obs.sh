@@ -26,7 +26,6 @@ rc=0 && $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
 
 if (( $rc >= 128 )) ; then
   logger --tag syndl.obsan --id=$$ -p news.err -s -- "killed rc=$rc"
-  cat /proc/meminfo
   exit $rc
 fi
 
@@ -43,7 +42,6 @@ rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
   || rc=$?
 if (( $rc >= 128 )) ; then
   logger --tag syndl.obsbf --id=$$ -p news.err -s -- "killed rc=$rc"
-  cat /proc/meminfo
   exit $rc
 fi
 

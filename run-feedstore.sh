@@ -22,6 +22,5 @@ rc=0 && $ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
 
 if (( $rc >= 128 )) ; then
   logger --tag feedstore --id=$$ -p news.err -s -- "killed rc=$rc"
-  cat /proc/meminfo
 fi
 exit $rc
