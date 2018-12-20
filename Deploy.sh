@@ -13,7 +13,7 @@ CONFIG
 fi
 : ${bindir:?} ${priv:?} ${cgidir:?}
 
-target="run-*.sh syndl.rb feedstore.rb"
+target="act-*.sh run-*.sh syndl.rb feedstore.rb"
 
 sudo -u $priv install -m 0755 $target $bindir
 

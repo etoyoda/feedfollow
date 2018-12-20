@@ -1,9 +1,8 @@
 #!/bin/bash
+set -Ceuo pipefail
 
 PATH=/bin:/usr/bin
 TZ=UTC; export TZ
-
-set -e
 
 : ${phase:=p0}
 : ${prefix:=${HOME}/nwp-test}
@@ -26,13 +25,16 @@ fi
 
 if mkdmsg=$(mkdir ${datedir} 2>&1)
 then
+  : --- rotation 1: minimal renaming ---
   incomplete=$(readlink incomplete || echo missing)
   yesterday=$(basename $incomplete .new)
   if [ -d "${incomplete}" ]; then
     mv -f "${incomplete}" "${yesterday}"
     ln -Tfs "${yesterday}" latest
     logger --tag run-prep --id=$$ -p news.info "latest -> ${yesterday}, incomplete -> ${datedir}"
-    gzip ${yesterday}/*-${yesterday}.tar
+    export yesterday
+    msg="$(echo bash act-p0-rot1gzip.sh | TZ=UTC at -q Z 0:30 2>&1)"
+    logger --tag run-prep --id=$$ -p news.info "$msg"
   fi
   ln -Tfs ${reftime}.new incomplete
 fi
