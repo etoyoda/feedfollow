@@ -15,7 +15,7 @@ cd ${base}
 # aborts by -e if prefix or base is ill-configured
 
 if test -f stop ; then
-  logger --tag run-prep --id=$$ -p news.err "suspended - remove ${base}/stop"
+  logger --tag run-rmdir --id=$$ -p news.err "suspended - remove ${base}/stop"
   false
 fi
 
@@ -24,6 +24,7 @@ weekago=$(ruby -rdate -e 'puts(Date.parse(ARGV.first) - 7)' ${reftime})
 for dir in 2*
 do
   if [[ $dir < $weekago ]] ; then
+    logger --tag run-rmdir --id=$$ -p news.notice "rm -rf $dir"
     rm -rf $dir
   fi
 done

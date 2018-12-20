@@ -79,6 +79,13 @@ class WGet
     $logger.close
   end
 
+  def status
+    if @n.include?('200') then 0
+    elsif @n.include?('304') then 3
+    else 4
+    end
+  end
+
 end
 
 class AtomParse
@@ -166,7 +173,7 @@ class FeedStore
     case code
     when '304' then return 0
     when '200' then :do_nothing
-    else exit "0#{code}".to_i
+    else raise Errno::EIO, "HTTP #{code}"
     end
     fbdy = @wget.body
     lmt2 = @wget.lmt
@@ -206,7 +213,7 @@ class FeedStore
     setlmt(feed, lmt2)
   end
 
-  def run
+  def run2
     idx = "#{@outfnam}.idx1"
     GDBM.open(idx, 0644, GDBM::WRCREAT) {|idb|
       @feedtar = TarWriter.open("feed-#{@outfnam}.tar", "a");
@@ -226,6 +233,11 @@ class FeedStore
   ensure
     @feedtar.close if @feedtar
     @wget.close
+  end
+
+  def run
+    run2
+    exit @wget.status
   end
 
 end

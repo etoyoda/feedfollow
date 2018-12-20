@@ -20,7 +20,16 @@ rc=0 && $ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
   "${feeddir}/eqvol.xml" "${feeddir}/other.xml" \
   || rc=$?
 
-if (( $rc >= 128 )) ; then
-  logger --tag feedstore --id=$$ -p news.err -s -- "killed rc=$rc"
+# exit 3 is HTTP 304 Not Modified, to be ignored
+logger --tag feedstore --id=$$ -p news.err -s -- "rc=$rc"
+
+if (( $rc == 0 )) ; then
+  for prog in ${prefix}/bin/act-jmx-*.sh
+  do
+    if test -e $prog ; then
+      logger --tag feedstore --id=$$ -p news.info -- $(echo $prog | batch 2>&1)
+    fi
+  done
 fi
+
 exit $rc
