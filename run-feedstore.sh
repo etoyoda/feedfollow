@@ -21,7 +21,11 @@ rc=0 && $ruby ${prefix}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
   || rc=$?
 
 # exit 3 is HTTP 304 Not Modified, to be ignored
-logger --tag feedstore --id=$$ -p news.err -s -- "rc=$rc"
+stderr=-s
+if (( $rc == 3 )) ; then
+  stderr=''
+fi
+logger --tag feedstore --id=$$ -p news.err $stderr -- "rc=$rc"
 
 if (( $rc == 0 )) ; then
   for prog in ${prefix}/bin/act-jmx-*.sh
