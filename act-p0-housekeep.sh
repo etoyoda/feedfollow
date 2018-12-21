@@ -5,7 +5,7 @@ PATH=/bin:/usr/bin
 TZ=UTC; export TZ
 
 # taken from run-prep0.sh
-: ${phase:?} ${base:?} ${reftime:?} ${datedir:?} ${prefix:?} ${yesterday:?}
+: ${base:?} ${reftime:?} ${yesterday:?}
 
 cd $base
 if test -f stop ; then
@@ -15,11 +15,10 @@ fi
 
 for tar in ${yesterday}/*.tar
 do
-  if test -f $tar
+  if test -f $tar -a ! -f $tar.gz
   then
     gzip -9k $tar
   fi
-  sleep 10
 done
 
 weekago=$(ruby -rdate -e 'puts(Date.parse(ARGV.first) - 7)' ${reftime})
