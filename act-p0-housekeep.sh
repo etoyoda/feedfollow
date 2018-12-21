@@ -13,6 +13,10 @@ if test -f stop ; then
   false
 fi
 
+rm -f ${yesterday}/syslogscan.ltsv
+ruby /nwp/bin/syslogscan.rb /var/log/syslog > ${yesterday}/syslogscan.ltsv
+cat ${yesterday}/syslogscan.ltsv
+
 for tar in ${yesterday}/*.tar
 do
   if test -f $tar -a ! -f $tar.gz
