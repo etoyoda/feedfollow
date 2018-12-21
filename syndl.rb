@@ -224,6 +224,7 @@ class SynDL
       else
         STDERR.puts "getfeed #{feed}" if $VERBOSE
         getfeed(ldb, feed)
+        GC.start
       end
     }
     }
