@@ -33,10 +33,7 @@ then
     ln -Tfs "${yesterday}" latest
     logger --tag run-prep --id=$$ -p news.info "latest -> ${yesterday}, incomplete -> ${datedir}"
     export yesterday
-    msg="$(TZ=UTC at -q Z 0:30 2>&1 <<-ENDBATCH)"
-      cd $base
-      prefix=$prefix bash $prefix/bin/act-p0-housekeep.sh
-    ENDBATCH
+    msg="$(echo "cd $base; prefix=$prefix bash $prefix/bin/act-p0-housekeep.sh" | TZ=UTC at -q Z 0:30 2>&1)"
     logger --tag run-prep --id=$$ -p news.info "$msg"
   fi
   ln -Tfs ${reftime}.new incomplete
