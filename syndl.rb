@@ -61,12 +61,9 @@ class WGet
       @resp = @conn.get2(path, hdr)
       STDERR.puts "#--> #{@resp.code}" if $VERBOSE
       rc = @resp.code
-    rescue Net::OpenTimeout => e
-      rc = '499';  $logger.err([rc, e.class.to_s].join(' '))
-    rescue Errno::ECONNRESET => e
-      rc = '498';  $logger.err([rc, e.class.to_s].join(' '))
-    rescue Net::ReadTimeout => e
-      rc = '497';  $logger.err([rc, e.class.to_s].join(' '))
+    rescue Exception => e
+      rc = '500'
+      $logger.err("#{rc} rescue=#{e.class.to_s}")
     end
     @n[rc] += 1
     rc
@@ -163,7 +160,7 @@ class SynDL
     else
       errid = "err:#{code}:" + Time.now.utc.strftime('%Y-%m-%dT%H%M%SZ')
       ldb[errid] = feed
-      exit "0#{code}".to_i
+      exit 16
     end
     fbdy = @wget.body
     lmt2 = @wget.lmt
