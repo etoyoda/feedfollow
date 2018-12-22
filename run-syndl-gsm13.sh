@@ -22,8 +22,12 @@ $ruby $syndl ${datedir}/gsm13-etag.db ${datedir}/gsm13-log.db \
   --match='Surface|Mean.sea.level|925hPa|850hPa|700hPa|500hPa|300hPa|250hPa|30hPa' \
   "${app}&Type=GRIB&Indicator=RJTD" || rc=$?
 
-if (( $rc != 0 )) ; then
-  logger --tag syndl.gsm13 --id=$$ -p news.err -s -- "rc=$rc"
-fi
+prio='-p news.err -s'
+case $rc in
+0|16)
+  prio='-p news.info'
+  ;;
+esac
+logger --tag syndl.gsm13 --id=$$ $prio -- "rc=$rc"
 
 exit $rc

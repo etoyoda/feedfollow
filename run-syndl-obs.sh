@@ -24,10 +24,13 @@ rc=0 && $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
   --match='' "${app}&Type=Alphanumeric&Subcategory=CLIMAT" \
   || rc=$?
 
-if (( $rc != 0 )) ; then
-  logger --tag syndl.obsan --id=$$ -p news.err -s -- "rc=$rc"
-  exit $rc
-fi
+prio='-p news.err -s'
+case $rc in
+0|16)
+  prio='-p news.info'
+  ;;
+esac
+logger --tag syndl.obsan --id=$$ $prio -- "rc=$rc"
 
 sleep 1
 
@@ -40,9 +43,13 @@ rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
   --match='A_IU(PC[45]|[KS]C[67])[0-9]RJTD' \
   "${app}&Type=BUFR&Category=Empty+or+Invalid" \
   || rc=$?
-if (( $rc != 0 )) ; then
-  logger --tag syndl.obsbf --id=$$ -p news.err -s -- "rc=$rc"
-  exit $rc
-fi
+
+prio='-p news.err -s'
+case $rc in
+0|16)
+  prio='-p news.info'
+  ;;
+esac
+logger --tag syndl.obsbf --id=$$ $prio -- "rc=$rc"
 
 exit 0
