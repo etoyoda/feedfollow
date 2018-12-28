@@ -1,7 +1,7 @@
 #!/bin/bash
 set -Ceuo pipefail
 
-PATH=/bin:/usr/bin
+PATH=/bin:/usr/bin:/usr/local/bin
 TZ=UTC; export TZ
 
 : ${phase:=p0}
@@ -37,6 +37,9 @@ then
     logger --tag run-prep --id=$$ -p news.info "$msg"
   fi
   ln -Tfs ${reftime}.new incomplete
+  gdbm incomplete/pshb.db clear
+  chmod o+rw incomplete/pshb.db
+  ln -Tf incomplete/pshb.db incomplete/psbm-${reftime}.db
 fi
 
 cd ${datedir}

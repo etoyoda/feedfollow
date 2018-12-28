@@ -9,7 +9,7 @@ TOPICS = [
 ]
 
 STORAGE = {
-  :path => '/nwp/spool/pshb.db'
+  :path => '/nwp/p0/incomplete/pshb.db'
 }
 
 PRMS = {
