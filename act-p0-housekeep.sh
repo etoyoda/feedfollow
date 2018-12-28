@@ -14,8 +14,11 @@ if test -f stop ; then
 fi
 
 rm -f ${yesterday}/syslogscan.ltsv
-ruby /nwp/bin/syslogscan.rb /var/log/syslog > ${yesterday}/syslogscan.ltsv
-cat ${yesterday}/syslogscan.ltsv
+ruby /nwp/bin/syslogscan.rb /var/log/syslog.1 > ${yesterday}/syslogscan.ltsv
+
+bash /nwp/bin/mailjis.sh ${yesterday}/syslogscan.ltsv news -s syslogscan-${yesterday}.ltsv news
+
+tar cf ${yesterday}/log-${yesterday}.tar ${yesterday}/\*.ltsv
 
 for tar in ${yesterday}/*.tar
 do
