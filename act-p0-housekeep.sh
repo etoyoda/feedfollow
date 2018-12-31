@@ -18,7 +18,7 @@ ruby /nwp/bin/syslogscan.rb /var/log/syslog.1 > ${yesterday}/syslogscan.ltsv
 
 bash /nwp/bin/mailjis.sh ${yesterday}/syslogscan.ltsv news -s syslogscan-${yesterday}.ltsv news
 
-tar cf ${yesterday}/log-${yesterday}.tar ${yesterday}/\*.ltsv
+tar cf ${yesterday}/log-${yesterday}.tar ${yesterday}/*.ltsv
 
 for tar in ${yesterday}/*.tar
 do
