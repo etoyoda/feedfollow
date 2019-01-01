@@ -20,25 +20,28 @@ bash /nwp/bin/mailjis.sh ${yesterday}/syslogscan.ltsv news -s syslogscan-${yeste
 
 (cd ${yesterday}; tar cf logs-${yesterday}.tar *.ltsv)
 
-for tar in ${yesterday}/*.tar
-do
-  if test -f $tar -a ! -f $tar.gz
-  then
-    gzip -9k $tar
-  fi
-done
-
 weekago=$(ruby -rdate -e 'puts(Date.parse(ARGV.first) - 7)' ${reftime})
 
 for dir in 2*[0-9]
 do
-  if [[ $dir < $yesterday ]] ; then
-    logger --tag p0-housekeep --id=$$ -p news.notice "rm -f $dir/{*.tar,*.db}"
-    rm -f $dir/*.tar $dir/*.db
-  fi
   if [[ $dir < $weekago ]] ; then
     logger --tag p0-housekeep --id=$$ -p news.notice "rm -rf $dir"
     rm -rf $dir
+  else
+    for tar in $dir/*.tar ; do
+      if [[ ! -f ${tar}.gz ]] ; then
+        logger --tag p0-housekeep --id=$$ -p news.notice "gzip -9k ${tar}"
+        gzip -9k ${tar}
+      fi
+    done
+    if [[ $dir < $yesterday ]] ; then
+      for tar in $dir/*.tar ; do
+        if [[ -f ${tar}.gz ]] ; then
+          logger --tag p0-housekeep --id=$$ -p news.notice "rm -f ${tar}"
+          rm -f ${tar}
+        fi
+      done
+    fi
   fi
 done
 
