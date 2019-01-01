@@ -17,15 +17,15 @@ class Time
       case str
       when /(\d+)\s+(\w+)\s+(\d+)\s+(\d+):(\d+):(\d+)\s+GMT/ then
         d, m, y, h, n, s = $1, $2, $3, $4, $5, $6
-        d, y, h, n, s = [d, y, h, n, s].map{|s| s.to_i}
+        d, y, h, n, s = [d, y, h, n, s].map{|cell| cell.to_i}
         m = MONTAB[m.downcase.to_sym].to_i
         Time.gm(y, m, d, h, n, s)
       when /(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+(?:\.\d+)?)Z/ then
-        y, m, d, h, n = [$1, $2, $3, $4, $5].map{|s| s.to_i}
+        y, m, d, h, n = [$1, $2, $3, $4, $5].map{|cell| cell.to_i}
         s = $6.to_f
         Time.gm(y, m, d, h, n, s)
       when /(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+(?:\.\d+)?)([-+]\d\d):?(\d\d)/ then
-        y, m, d, h, n, zh, zn = [$1, $2, $3, $4, $5, $7, $8].map{|s| s.to_i}
+        y, m, d, h, n, zh, zn = [$1, $2, $3, $4, $5, $7, $8].map{|cell| cell.to_i}
         s = $6.to_f
         Time.gm(y, m, d, h, n, s) - (zh * 60 + zn)
       else raise "unknown datetime format #{str}"
@@ -43,7 +43,7 @@ class App
     @method = ENV['REQUEST_METHOD'].to_s
     @path = ENV['PATH_INFO'].to_s
     @reqbody = nil
-    @myname = myname
+    @myname = nil; myname
     #config
     @dbdir = '/nwp/p0'
     @pagesize = 25
@@ -54,16 +54,16 @@ class App
     host = ENV['SERVER_NAME'] || 'localhost'
     port = ENV['SERVER_PORT'] || '80'
     script = ENV['SCRIPT_NAME']
-    "//#{host}:#{port}#{script}"
+    @myname = "//#{host}:#{port}#{script}"
   end
 
   def check_hims span = 60, tnow = Time.now
     if hims = ENV['HTTP_IF_MODIFIED_SINCE'] then
-      STDERR.puts "HIMS #{hims.inspect}" if $DEBUG
+      STDERR.puts "HIMS #{hims.inspect}" if $VERBOSE
       t = Time.parse(hims) + span
-      STDERR.puts "CMP t=#{t} tnow=#{tnow}" if $DEBUG
+      STDERR.puts "CMP t=#{t} tnow=#{tnow}" if $VERBOSE
       raise Errno::EAGAIN, File.join(myname, @path) if t > tnow
-      STDERR.puts "CMP PASSTHRU" if $DEBUG
+      STDERR.puts "CMP PASSTHRU" if $VERBOSE
     end
     tnow
   end
@@ -71,6 +71,7 @@ class App
   def path_index
     tnow = check_hims
     latest_dir = File.join(@dbdir, 'incomplete')
+    require 'rubygems'
     require 'html_builder'
     d = HTMLBuilder.new('syndl: dataset list')
     d.header('lang', 'en')
@@ -258,7 +259,8 @@ class App
   end
 
   def path_entry datedir, dsname, msgid
-    tnow = check_hims(86400 * 10)
+    check_hims(86400 * 10)
+    require 'rubygems'
     require 'archive/tar/minitar'
     require 'html_builder'
     ymd = datedir.sub(/\.new$/, '')
@@ -288,7 +290,8 @@ class App
     raise Errno::ENOENT, "file #{msgid} not found" unless body
     xpr = (Time.now.utc + 86400 * 2)
     ctype = case msgid
-      when /\.txt$/ then 'text/plain'
+      when /\.(?:txt|log|ltsv|csv)$/ then 'text/plain; charset=utf-8'
+      when /\.(?:html|xhtml)$/ then 'text/html; charset=utf-8'
       when /\.bufr$/ then 'application/x-bufr' # Source: http://wis.wmo.int/doc=2343
       when /\.grib$/ then 'application/x-grib' # Source: http://wis.wmo.int/doc=2343
       when /\.nc$/ then 'application/netcdf' # Source: http://wis.wmo.int/doc=2343

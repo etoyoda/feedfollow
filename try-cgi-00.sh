@@ -15,7 +15,8 @@ offset=$2
 
 test ! -f z.out || rm z.out
 
-cgi=/usr/lib/cgi-bin/syndl.cgi
-#cgi=./syndl.cgi
+#cgi=/usr/lib/cgi-bin/syndl.cgi
+cgi=./syndl.cgi
 
 PATH_INFO=/entry/${datedir}/jmx/${uuid} REQUEST_METHOD=GET ruby -d $cgi > z.out
+ls -l z.out
