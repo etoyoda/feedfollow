@@ -179,7 +179,14 @@ class App
       require 'zlib'
       do_gunzip = true
       tarfile += '.gz'
-      tarstat = File.stat(tarfile)
+      begin
+        tarstat = File.stat(tarfile)
+      rescue Errno::ENOENT
+        do_gunzip = false
+        tarfile.sub!(/\.gz$/, '')
+        tarfile.sub!(/(\/20\d\d-[01]\d-[0-3]\d)/, '\1.new')
+        tarstat = File.stat(tarfile)
+      end
     end
     insmax = tarstat.mtime
     database = []
@@ -272,7 +279,14 @@ class App
       require 'zlib'
       do_gunzip = true
       tarfile += '.gz'
-      tarstat = File.stat(tarfile)
+      begin
+        tarstat = File.stat(tarfile)
+      rescue Errno::ENOENT
+        do_gunzip = false
+        tarfile.sub!(/\.gz$/, '')
+        tarfile.sub!(/(\/20\d\d-[01]\d-[0-3]\d)/, '\1.new')
+        tarstat = File.stat(tarfile)
+      end
     end
     body = nil
     upd = nil
@@ -323,7 +337,7 @@ class App
     case ex
     when Errno::EXDEV  then status = "402 Payment Required"
     when Errno::EPERM  then status = "403 Forbidden"
-    when Errno::ENOENT then status = "404 File Not Found"
+    when Errno::ENOENT then status = "404 File Not Found"; msg += ex.backtrace.first
     when Errno::EILSEQ then status = "405 Method Not Allowed"
     when Errno::EBADF  then status = "410 Gone"
     else

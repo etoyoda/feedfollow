@@ -6,6 +6,7 @@ PATH=/bin:/usr/bin:/usr/local/bin
 nwp=/nwp
 idx1=${nwp}/p0/incomplete/jmx-2*.idx1
 datedir=$(readlink ${nwp}/p0/incomplete)
+datedir=2019-01-02
 
 set $(gdbm ${idx1} select ^u | head -1)
 uuid=$1
