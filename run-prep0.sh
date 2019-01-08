@@ -37,6 +37,8 @@ then
     logger --tag run-prep --id=$$ -p news.info "$msg"
   fi
   ln -Tfs ${reftime}.new incomplete
+  mkdir incomplete/logs
+  touch incomplete/logs-${reftime}.tar
   gdbm incomplete/pshb.db clear
   chmod o+rw incomplete/pshb.db
   ln -Tf incomplete/pshb.db incomplete/psbm-${reftime}.db
