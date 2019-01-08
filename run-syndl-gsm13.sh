@@ -2,10 +2,10 @@
 
 PATH=/bin:/usr/bin
 
-: ${phase:?} ${base:?} ${reftime:?} ${datedir:?} ${prefix:?}
+: ${phase:?} ${base:?} ${reftime:?} ${datedir:?} ${nwp:?}
 
 : ${ruby:=/usr/bin/ruby}
-: ${syndl:=${prefix}/bin/syndl.rb}
+: ${syndl:=${nwp}/bin/syndl.rb}
 : ${app:='https://www.wis-jma.go.jp/data/syn?ContentType=Text&Access=Open'}
 : ${ca:='--ca=/etc/ssl/certs/'}
 
