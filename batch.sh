@@ -30,6 +30,7 @@ exec >&3 2>&3
 if [ \$rc = 0 ]; then
   mv -f \$logfile /nwp/p0/incomplete/logs/ || :
 else
+  ln -f \$logfile /nwp/p0/incomplete/logs/ || :
   echo "=== jobid=\$JOBID rc=\$rc job=<$*> ==="
   tail -40 \$logfile
 fi
