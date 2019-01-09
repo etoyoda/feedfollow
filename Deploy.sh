@@ -13,7 +13,7 @@ CONFIG
 fi
 : ${bindir:?} ${priv:?} ${cgidir:?}
 
-target="act-*.sh run-*.sh syndl.rb feedstore.rb syslogscan.rb"
+target="batch.sh act-*.sh run-*.sh syndl.rb feedstore.rb syslogscan.rb"
 
 sudo -u $priv install -m 0755 $target $bindir
 

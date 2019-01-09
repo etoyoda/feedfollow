@@ -47,5 +47,3 @@ fi
 cd ${datedir}
 
 bash -$- "$@"
-
-exit 0

@@ -37,4 +37,9 @@ if (( $rc == 0 )) ; then
   done
 fi
 
+case $rc in
+3)
+  rc=3
+  ;;
+esac
 exit $rc
