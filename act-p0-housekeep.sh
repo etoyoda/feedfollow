@@ -17,14 +17,14 @@ if test -f stop ; then
 fi
 
 if [[ -d ${yesterday}/logs ]]; then
-  rm -f ${yesterday}/syslogscan.ltsv
+  rm -f ${yesterday}/logs/syslogscan.ltsv
   ruby /nwp/bin/syslogscan.rb /var/log/syslog.1 > ${yesterday}/logs/syslogscan.ltsv
   bash /nwp/bin/mailjis.sh ${yesterday}/logs/syslogscan.ltsv news \
     -s syslogscan-${yesterday}.ltsv news
   if ( cd ${yesterday} &&
     tar rf logs-${yesterday}.tar *.ltsv &&
     cd logs &&
-    tar rf logs-${yesterday}.tar * && 
+    tar rf ../logs-${yesterday}.tar * && 
     cd .. &&
     rm -rf logs) 
   then
