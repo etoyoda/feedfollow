@@ -1,6 +1,8 @@
 #!/bin/bash
 set -Ceuo pipefail
 
+: prepare00copy.sh - prepare the ~/nwp-test directory to be copy of current state 
+
 : ${testdir:=${HOME}/nwp-test}
 : ${rtndir:=/nwp}
 : ${part:=p0}
