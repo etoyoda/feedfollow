@@ -268,7 +268,7 @@ class App
   def path_entry datedir, dsname, msgid
     check_hims(86400 * 10)
     require 'rubygems'
-    require 'archive/tar/minitar'
+    require 'tarreader'
     require 'html_builder'
     ymd = datedir.sub(/\.new$/, '')
     tarfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.tar")
@@ -288,14 +288,26 @@ class App
         tarstat = File.stat(tarfile)
       end
     end
+    seek = nil
+    idxfile = File.join(@dbdir, datedir, "#{dsname}-#{ymd}.idx1")
+    begin
+      require 'gdbm'
+      GDBM.open(idxfile) {|db|
+        seek = db[msgid].to_i if db[msgid]
+      }
+      $stderr.puts "seek=#{seek}" if $VERBOSE
+    rescue Errno::ENOENT
+    end
     body = nil
     upd = nil
     File.open(tarfile, 'rb') {|fp|
       fp.set_encoding('BINARY')
       io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
-      Archive::Tar::Minitar::Reader.open(io) { |tar|
+      TarReader.open(io) { |tar|
+        tar.pos = seek if seek
         tar.each_entry {|ent|
           next unless ent.name == msgid
+          $stderr.puts "ent.pos=#{ent.pos}" if $VERBOSE
           body = ent.read
           upd = Time.at(ent.mtime).utc
         }
