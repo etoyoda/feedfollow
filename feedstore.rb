@@ -58,7 +58,7 @@ class WGet
       STDERR.puts "If-Modified-Since: #{lmt}" if $VERBOSE
       hdr['if-modified-since'] = lmt
     end
-    @resp = @conn.get2(path, hdr)
+    @resp = @conn.request_get(path, hdr)
     rc = @resp.code
     STDERR.puts "--> #{rc}" if $VERBOSE
     @n[rc] += 1
@@ -66,6 +66,11 @@ class WGet
   end
 
   def body
+    if "\0\0\0\0" == @resp.body[-4,4]
+      sleep 0.3
+      $logger.info('NUL-filled file')
+      STDERR.puts "NUL-filled file"
+    end
     @resp.body
   end
 

@@ -3,6 +3,7 @@ module PSHBSpool
 TOPICS = [
   {
     :name => 'JMAXML',
+    :urlpat => %r{^https?://xml\.kishou\.go\.jp\/},
     :bdypat => %r{http://xml\.kishou\.go\.jp\/},
     :vtoken => '123456789'
   },

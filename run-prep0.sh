@@ -42,6 +42,9 @@ then
   gdbm incomplete/pshb.db clear
   chmod o+rw incomplete/pshb.db
   ln -Tf incomplete/pshb.db incomplete/psbm-${reftime}.db
+  if [ -f latest/jmx-${yesterday}.idx1 ]; then
+    ruby ${nwp}/bin/idxshadow.rb latest/jmx-${yesterday}.idx1 incomplete/jmx-${reftime}.idx1
+  fi
 fi
 
 cd ${datedir}
