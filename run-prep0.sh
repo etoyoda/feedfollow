@@ -45,6 +45,9 @@ then
   if [ -f latest/jmx-${yesterday}.idx1 ]; then
     ruby ${nwp}/bin/idxshadow.rb latest/jmx-${yesterday}.idx1 incomplete/jmx-${reftime}.idx1
   fi
+  if [ -f ${nwp}/bin/act-wxmon-housekeep.sh ]; then
+    bash ${nwp}/bin/act-wxmon-housekeep.sh
+  fi
 fi
 
 cd ${datedir}
