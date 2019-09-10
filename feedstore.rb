@@ -139,6 +139,7 @@ class FeedStore
     @rtdb = argv.shift
     @outfnam = argv.shift
     ca = argv.shift
+    @qhack = format('m=%u', Time.now.min % 10)
     @feeds = argv
     help if @feeds.empty?
     @wget = WGet.new
@@ -174,6 +175,7 @@ class FeedStore
   def getfeed(idb, tar, feed)
     lmt = getlmt(feed)
     ufeed = URI.parse(feed)
+    ufeed.query = @qhack if @qhack
     code = @wget.get(ufeed, lmt)
     case code
     when '304' then return 0
