@@ -188,10 +188,10 @@ class FeedStore
     # @wget can be reused now
     li = AtomParse.new { |rec|
       STDERR.puts rec.inspect if $VERBOSE
+      ft = Time.parse(rec['updated'])
       if @dfilter then
-        t = Time.parse(rec['updated'])
-        unless @dfilter === t then
-          STDERR.puts "skip -d #{t} #{id}" if $VERBOSE
+        unless @dfilter === ft then
+          STDERR.puts "skip -d #{ft} #{id}" if $VERBOSE
           next
         end
       end
@@ -210,6 +210,7 @@ class FeedStore
         idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
+        idb["ft/#{id}"] = [ft, t].map{|s| s.strftime('%Y-%m-%dT%H%M%S')}.join('/')
       end
     }
     begin
