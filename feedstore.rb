@@ -210,7 +210,7 @@ class FeedStore
         idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
-        idb["ft/#{id}"] = [ft, t].map{|s| s.strftime('%Y-%m-%dT%H%M%SZ')}.join('/')
+        idb["ft/#{id}"] = ft.strftime('%Y-%m-%dT%H:%M:%SZ')
       end
     }
     begin
