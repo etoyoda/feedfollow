@@ -205,12 +205,12 @@ class FeedStore
         @wget.get(umsg)
         body = @wget.body
         STDERR.puts "size #{body.size}" if $VERBOSE
+        idb["lmt/#{id}"] = lmt2
         t = Time.now.utc
         pos = tar.add(id, body, t)
         idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
-        idb["ft/#{id}"] = ft.strftime('%Y-%m-%dT%H:%M:%SZ')
       end
     }
     begin
