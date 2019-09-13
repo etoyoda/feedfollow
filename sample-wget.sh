@@ -18,6 +18,12 @@ server="${scheme}://www.data.jma.go.jp/developer/xml/feed"
 
 sleep ${magic}
 
+if test -f url.txt; then
+  echo url.txt exists
+  exit 0
+fi
+trap "rm -f url.txt" 0
+
 for feed in ${feeds}
 do
   feedurl="${server}/${feed}.xml"
@@ -31,4 +37,5 @@ do
     fi
   done
   wget -qi url.txt
+  : use data here
 done
