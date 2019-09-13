@@ -9,8 +9,11 @@ export phase base reftime datedir nwp
 : ${ruby:=/usr/bin/ruby}
 : ${feeddir:='https://www.data.jma.go.jp/developer/xml/feed'}
 : ${ca:='/etc/ssl/certs/'}
+: ${magic:=6}
 
 cd ${datedir}
+
+sleep ${magic}
 
 rc=0 && \
 $ruby ${nwp}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
