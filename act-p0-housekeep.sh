@@ -62,16 +62,6 @@ do
         rm -f ${tar} || continue
       fi
     done
-    for idx in $dir/*.idx1 ; do
-      if [[ ! -f $idx ]]; then
-        continue
-      fi
-      aidx=${abase}/${month}/$(basename ${idx})
-      if [[ ! -f $aidx ]]; then
-        logger --tag p0-housekeep --id=$$ -p news.notice "ln ${idx} ${aidx}"
-        ln -Tf $idx $aidx || continue
-      fi
-    done
   fi
 done
 
