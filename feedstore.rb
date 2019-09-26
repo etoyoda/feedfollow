@@ -213,11 +213,11 @@ class FeedStore
     }
     begin
       REXML::Parsers::StreamParser.new(fbdy, li).parse
+      setlmt(feed, lmt2)
     rescue REXML::ParseException => e
       STDERR.puts("feed #{feed} - #{e.message}")
       $logger.err('feed %s - %s', feed, e.message)
     end
-    setlmt(feed, lmt2)
   end
 
   def run2
