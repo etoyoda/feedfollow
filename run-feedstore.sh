@@ -9,7 +9,7 @@ export phase base reftime datedir nwp
 : ${ruby:=/usr/bin/ruby}
 : ${feeddir:='https://www.data.jma.go.jp/developer/xml/feed'}
 : ${ca:='/etc/ssl/certs/'}
-: ${magic:=20}
+: ${magic:=25}
 
 cd ${datedir}
 
