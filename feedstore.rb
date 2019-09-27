@@ -66,11 +66,6 @@ class WGet
   end
 
   def body
-    if "\0\0\0\0" == @resp.body[-4,4]
-      sleep 0.3
-      $logger.info('NUL-filled file')
-      STDERR.puts "NUL-filled file"
-    end
     @resp.body
   end
 
