@@ -195,7 +195,15 @@ class FeedStore
       end
       begin
         umsg = ufeed.merge(rec['link/@href'])
-        @wget.get(umsg)
+        code2 = @wget.get(umsg)
+        case code2
+        when '200' then :do_nothing
+        when '404' then
+          $logger.err('404 %s', umsg)
+          raise Errno::ENOENT, umsg
+        else
+          raise Errno::EIO, "HTTP #{code2}"
+        end
         body = @wget.body
         STDERR.puts "size #{body.size}" if $VERBOSE
         idb["lmt/#{id}"] = lmt2
@@ -204,6 +212,7 @@ class FeedStore
         idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
+      rescue Errno::ENOENT
       end
     }
     begin
