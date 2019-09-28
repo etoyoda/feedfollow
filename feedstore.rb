@@ -199,9 +199,10 @@ class FeedStore
         case code2
         when '200' then :do_nothing
         when '404' then
-          $logger.err('404 %s', umsg)
+          $logger.err('rescue=ENOENT %s', umsg)
           raise Errno::ENOENT, umsg
         else
+          $logger.err('rescue=EIO %s', umsg)
           raise Errno::EIO, "HTTP #{code2}"
         end
         body = @wget.body
@@ -213,6 +214,7 @@ class FeedStore
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
       rescue Errno::ENOENT
+        nil
       end
     }
     begin
