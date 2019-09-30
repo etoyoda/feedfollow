@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+require 'syslog'
+
 $LOAD_PATH.push '/usr/local/etc'
 
 class Time
@@ -24,6 +26,7 @@ class App
     @clen = ENV['CONTENT_LENGTH']
     @clen = @clen.to_i if @clen
     @reqbody = nil
+    $logger = Syslog.open('pshbspool', Syslog::LOG_PID, Syslog::LOG_NEWS)
   end
 
   def verify_auth topic, vtok
@@ -52,7 +55,9 @@ class App
       pa[k] = v.gsub(/%[\dA-Fa-f]{2}/){|s| [s[1,2]].pack('H2') }
     end
     verify_auth(pa['hub.topic'].to_s, pa['hub.verify_token'].to_s)
-    verify_log(pa)
+    vid = verify_log(pa)
+    $logger.info('verify id=%u topic=%s mode=%s', vid,
+      pa['hub.topic'].to_s, pa['hub.mode'].to_s)
     chal = pa['hub.challenge'].to_s
     <<EOF + chal
 Content-Type: text/plain\r
@@ -100,6 +105,7 @@ EOF
       post_check
       postid = post_store1(db)
     }
+    $logger.info('post postid=%u tpn=%s', postid, @tpn)
     return "Content-Type: text/plain\r\n\r\nok postid:#{postid}"
   end
 
@@ -120,6 +126,7 @@ EOF
       postid = db['postid']
       verifyid = db['verifyid']
     }
+    $logger.info('get postid=%u verifyid=%u', postid, verifyid)
     return "Content-Type: text/plain\r\n\r\npostid:#{postid} verifyid:#{verifyid}"
   end
 
@@ -142,6 +149,7 @@ EOF
     resp = ["Date: #{Time.now.rfc1123}\r\n", resp].join
     print resp
   rescue Errno::EAGAIN => e
+    $logger.err('rc=304 %s', e.message)
     puts <<EOF
 Status: 304 Not Modified\r
 Date: #{Time.now.rfc1123}\r
@@ -149,6 +157,7 @@ Content-Location: #{e.message.sub(/.* - /, '')}\r
 \r
 EOF
   rescue Errno::EPERM => e
+    $logger.err('rc=404 %s', e.message)
     puts <<EOF
 Status: 404 File Not Found\r
 Date: #{Time.now.rfc1123}\r
@@ -157,6 +166,7 @@ Content-Type: text/plain; charset=utf8\r
 #{e.message}\r
 EOF
   rescue Exception => e
+    $logger.err('rc=501 rescue=%s', e.class.to_s)
     puts <<EOF
 Status: 501 Internal Server Error\r
 Content-Type: text/plain; charset=utf8\r
