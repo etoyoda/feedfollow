@@ -19,7 +19,7 @@ class App
     @qstr = ENV['QUERY_STRING'].to_s
     @path = ENV['PATH_INFO'].to_s
     @addr = ENV['REMOTE_ADDR'].to_s
-    @link = ENV['HTTP_LINK'].to_s
+    @tpn = nil
     @ctype = ENV['CONTENT_TYPE'].to_s
     @clen = ENV['CONTENT_LENGTH']
     @clen = @clen.to_i if @clen
@@ -38,6 +38,7 @@ class App
   def post_check
     for cfg in TOPICS
       next unless cfg[:bdypat] === @reqbody
+      @tpn = cfg[:name]
       return true
     end
     raise Errno::EPERM, "pattern check failed: edit TOPICS::cfg[:bdypat]"
@@ -85,7 +86,7 @@ EOF
     # postid is always a String
     postid = (db['postid'].to_i + 1).to_s
     db['src:' + postid] = @addr
-    db['lnk:' + postid] = @link
+    db['tpn:' + postid] = @tpn
     db['upd:' + postid] = Time.now.isofull
     db['bdy:' + postid] = @reqbody
     db['postid'] = postid
