@@ -68,7 +68,7 @@ class App
     argf.each_line {|line|
       raise "bad time format <#{line}>" unless /^(\w\w\w [ 123]\d \d\d:\d\d:\d\d)/ === line
       time = Time.parse($1)
-      next unless /(oom-killer|run-prep|syndl|feedstore|wxmon|jmxscan)/ === line
+      next unless /(oom-killer|run-prep|syndl|feedstore|wxmon|jmxscan|pshbspool)/ === line
       tag = $1
       tag = $1 if /syndl\.(\w+)/ === line
       tag = $1 if /"tag"=>"(\w+)"/ === line
