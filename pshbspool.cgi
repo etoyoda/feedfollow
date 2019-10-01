@@ -166,7 +166,7 @@ Content-Type: text/plain; charset=utf8\r
 #{e.message}\r
 EOF
   rescue Exception => e
-    $logger.err('rc=501 rescue=%s %s', e.class.to_s, e.message)
+    $logger.err('rc=501 rescue=%s %s %s', e.class.to_s, e.message, e.backtrace.first)
     puts <<EOF
 Status: 501 Internal Server Error\r
 Content-Type: text/plain; charset=utf8\r
