@@ -7,7 +7,7 @@ require 'time'
 require 'syslog'
 
 fnam = ARGV.shift
-limit = (ARGV.shift || '100').to_i
+limit = (ARGV.shift || '180').to_i
 dest = ARGV.shift || 'http://alert-hub.appspot.com/publish'
 now = Time.now
 queue = {}
