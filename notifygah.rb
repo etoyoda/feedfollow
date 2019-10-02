@@ -10,7 +10,7 @@ fnam = ARGV.shift
 limit = (ARGV.shift || '100').to_i
 dest = ARGV.shift || 'http://alert-hub.appspot.com/publish'
 now = Time.now
-queue = []
+queue = {}
 $logger = Syslog.open('notifygah', Syslog::LOG_PID, Syslog::LOG_NEWS)
 
 GDBM::open(fnam, GDBM::READER){|db|
@@ -18,24 +18,27 @@ GDBM::open(fnam, GDBM::READER){|db|
     next unless /^lmt\// === k
     feed = $'
     lmt = Time.parse(v)
-    if now - lmt > limit
-      $logger.info('skip %g %s', now - lmt, File.basename(feed))
+    tdif = now - lmt
+    if tdif > limit
+      $logger.info('skip %g %s', tdif, File.basename(feed)) if $VERBOSE
       next
     end
-    queue.push feed
+    queue[feed] = tdif
   end
 }
 udest = URI.parse(dest)
 rc = 0
-for feed in queue
+for feed, tdif in queue
   form = {'hub.mode'=>'publish', 'hub.url'=>feed}
   r = Net::HTTP.post_form(udest, form)
   case r.code
   when /^2/ then 
-    $logger.info('ok %s feed=%s', r.code, File.basename(feed))
+    $logger.info('ok %s %g feed=%s', r.code, tdif, File.basename(feed))
     rc = 0
   else
-    $logger.err('ng %s feed=%s', r.code, File.basename(feed))
+    msg = sprintf('err %s %g feed=%s', r.code, tdif, File.basename(feed))
+    $stderr.puts(msg)
+    $logger.err(msg)
     rc = 4
   end
 end
