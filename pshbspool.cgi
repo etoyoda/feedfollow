@@ -126,7 +126,7 @@ EOF
       postid = db['postid']
       verifyid = db['verifyid']
     }
-    $logger.info('get postid=%u verifyid=%u', postid, verifyid)
+    $logger.info('get postid=%s verifyid=%s', postid.inspect, verifyid.inspect)
     return "Content-Type: text/plain\r\n\r\npostid:#{postid} verifyid:#{verifyid}"
   end
 
