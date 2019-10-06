@@ -80,6 +80,7 @@ class WGet
   end
 
   def status
+    return 11 if @n.empty?
     if @n.include?('200') then 0
     elsif @n.include?('304') then 3
     else 4
@@ -243,6 +244,8 @@ class FeedStore
         }
       }
     }
+  rescue Errno::EAGAIN
+    $logger.err('rescue=EAGAIN idx=%s', @outfnam)
   ensure
     @feedtar.close if @feedtar
     @wget.close
