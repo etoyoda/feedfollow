@@ -19,8 +19,5 @@ if (( $rc != 0 )) ; then
   exit $rc
 fi
 
-cat tmp.ltsv >> jmx-index-${ymd}.ltsv
-logger --tag wxmon --id=$$ -p news.info -- "jmx-index-${ymd}.ltsv updated"
-
 exit 0
 
