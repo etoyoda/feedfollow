@@ -36,7 +36,7 @@ sleep 1
 
 rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
   --tar=obsbf-${reftime}.tar $ca --tag=obsbf \
-  --match='TEMP|PILOT' \
+  --match='TEMP|PILOT|AMDAR' \
   "${app}&Type=BUFR&Category=Upper+air" \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
   "${app}&Type=BUFR&Category=Surface" \
