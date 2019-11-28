@@ -12,6 +12,7 @@ export ARCHHOST
 
 ${RUBY} -- - ${ACLOG} <<-'END_OF_RUBY'
   archhost = ENV['ARCHHOST']
+  n = 0
   ARGF.each_line {|line|
     next unless /^\S+ (\S+) .*\] "GET (\S+[^\/]) HTTP\/1\.\d+" 200 (\d+) / === line
     clie, path, size = $1, $2, $3
@@ -34,9 +35,12 @@ ${RUBY} -- - ${ACLOG} <<-'END_OF_RUBY'
     begin
       # $stderr.puts "unlink #{path}"
       File.unlink(path)
+      n += 1
     rescue Errno::EACCES
       $stderr.puts "Permission denied: unlink #{path}"
       next
     end
   }
+  $stderr.puts "no deletion today - check #{archhost}" if n.zero?
+  puts "no deletion today - check #{archhost}" if n.zero?
 END_OF_RUBY
