@@ -41,7 +41,8 @@ rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
   --match='SYNOP|SHIP|BUOY|RADOB|WAVEOB' \
   "${app}&Type=BUFR&Category=Surface" \
   --match='A_IU(PC[45]|[KS]C[67])[0-9]RJTD' \
-  "${app}&Type=BUFR&Category=Empty+or+Invalid" \
+  "${app}&Type=BUFR&Category=Satellite" \
+  --match='SAREP' \
   || rc=$?
 
 prio='-p news.err -s'
