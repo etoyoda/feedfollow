@@ -20,7 +20,7 @@ class App
     end
     if /rc=(\d+)/ === line then
       rc = $1
-      rc = '0' if tag == 'feedstore' and rc == '3'
+      rc = '0' if tag == 'feedstore' and rc == '3' or rc == '11'
       unless rc == '0' then
         row['err'] = '' unless row['err']
         row['err'] += " #{rc},#{time.strftime('%H:%M')}"
