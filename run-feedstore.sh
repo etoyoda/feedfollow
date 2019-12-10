@@ -6,6 +6,12 @@ PATH=/bin:/usr/bin
 : ${phase:?} ${base:?} ${reftime:?} ${datedir:?} ${nwp:?}
 export phase base reftime datedir nwp
 
+case "`date +%M`" in
+01)
+  exit 0
+  ;;
+esac
+
 : ${ruby:=/usr/bin/ruby}
 : ${feeddir:='https://www.data.jma.go.jp/developer/xml/feed'}
 : ${ca:='/etc/ssl/certs/'}
