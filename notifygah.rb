@@ -30,7 +30,13 @@ udest = URI.parse(dest)
 rc = 0
 for feed, tdif in queue
   form = {'hub.mode'=>'publish', 'hub.url'=>feed}
-  r = Net::HTTP.post_form(udest, form)
+  begin
+    r = Net::HTTP.post_form(udest, form)
+  rescue Net::ReadTimeout
+    $logger.err("err Net::ReadTimeout #{tdif} feed=#{File.basename(feed)}")
+    rc = 8
+    break
+  end
   case r.code
   when /^2/ then 
     $logger.info('ok %s %g feed=%s', r.code, tdif, File.basename(feed))
