@@ -64,8 +64,8 @@ class App
   def endmsg
     return if @n > 0
     msg = "no file removed this time - check config"
-    $stderr.puts $msg
-    puts $msg
+    $stderr.puts msg
+    puts msg
     exit 16
   end
 
