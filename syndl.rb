@@ -181,7 +181,15 @@ class SynDL
       end
       begin
         umsg = URI.parse(id)
-        @wget.get(umsg)
+        code = @wget.get(umsg)
+        if '404' == code then
+          sleep 3
+          code = @wget.get(umsg)
+        end
+        if '404' == code then
+          sleep 9
+          code = @wget.get(umsg)
+        end
         body = @wget.body
         STDERR.puts "#size #{body.size}" if $VERBOSE
         fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
