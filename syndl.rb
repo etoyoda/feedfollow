@@ -89,6 +89,10 @@ class WGet
     @n['EAGAIN'] = 1
   end
 
+  def waitok s
+    @n["wait#{s}"] += 1
+  end
+
   def close
     @conn.finish if @conn and @conn.started?
     $logger.info('elapsed %g wget %s', Time.now - $onset, @n.inspect)
@@ -185,10 +189,12 @@ class SynDL
         if '404' == code then
           sleep 3
           code = @wget.get(umsg)
+          @wget.waitok(3) if '200' == code
         end
         if '404' == code then
           sleep 9
           code = @wget.get(umsg)
+          @wget.waitok(12) if '200' == code
         end
         body = @wget.body
         STDERR.puts "#size #{body.size}" if $VERBOSE
