@@ -214,11 +214,10 @@ class SynDL
         @wget.waitok(i * 11)
       }
     }
-    if defer.empty?
-      setlmt(feed, lmt2, etag2)
-    else
+    unless defer.empty?
       defer.keys.each{ @wget.waitok('X') }
     end
+    setlmt(feed, lmt2, etag2)
   end
 
   def run
