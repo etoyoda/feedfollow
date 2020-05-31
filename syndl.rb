@@ -171,6 +171,7 @@ class SynDL
     etag2 = @wget.etag
     STDERR.puts "#ETag: #{etag2}" if $VERBOSE
     # @wget can be reused now
+    defer = Hash.new
     fbdy.each_line { |line|
       id = line.chomp
       if @pfilter[:match] then
@@ -183,19 +184,11 @@ class SynDL
         STDERR.puts "#dup skip #{id}" if $VERBOSE
         next
       end
-      begin
-        umsg = URI.parse(id)
-        code = @wget.get(umsg)
-        if '404' == code then
-          sleep 3
-          code = @wget.get(umsg)
-          @wget.waitok(3) if '200' == code
-        end
-        if '404' == code then
-          sleep 9
-          code = @wget.get(umsg)
-          @wget.waitok(12) if '200' == code
-        end
+      umsg = URI.parse(id)
+      code = @wget.get(umsg)
+      if '404' == code then
+        defer[umsg] = true
+      else
         body = @wget.body
         STDERR.puts "#size #{body.size}" if $VERBOSE
         fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
@@ -204,6 +197,22 @@ class SynDL
         ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
       end
     }
+    4.times {|i|
+      sleep(11)
+      defer.keys.each {|umsg|
+        next unless defer[umsg]
+        code = @wget.get(umsg)
+        next if '404' == code
+        body = @wget.body
+        STDERR.puts "#size #{body.size}" if $VERBOSE
+        fnam = File.basename(id).gsub(/[^A-Za-z_0-9.]/, '_')
+        t = Time.now.utc
+        @folder.add(fnam, body, t)
+        ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
+        defer[umsg] = false
+        @wget.waitok(i * 11)
+      }
+    } unless defer.empty?
     setlmt(feed, lmt2, etag2)
   end
 
