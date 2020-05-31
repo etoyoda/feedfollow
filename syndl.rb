@@ -197,7 +197,7 @@ class SynDL
         ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
       end
     }
-    4.times {|i|
+    5.times {|i|
       break if defer.empty?
       sleep(11)
       defer.keys.each {|id|
@@ -214,7 +214,11 @@ class SynDL
         @wget.waitok(i * 11)
       }
     }
-    setlmt(feed, lmt2, etag2)
+    if defer.empty?
+      setlmt(feed, lmt2, etag2)
+    else
+      defer.keys.each{ @wget.waitok('X') }
+    end
   end
 
   def run
