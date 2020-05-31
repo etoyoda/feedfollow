@@ -187,7 +187,7 @@ class SynDL
       umsg = URI.parse(id)
       code = @wget.get(umsg)
       if '404' == code then
-        defer[umsg] = true
+        defer[id] = true
       else
         body = @wget.body
         STDERR.puts "#size #{body.size}" if $VERBOSE
@@ -198,9 +198,10 @@ class SynDL
       end
     }
     4.times {|i|
+      break if defer.empty?
       sleep(11)
-      defer.keys.each {|umsg|
-        next unless defer[umsg]
+      defer.keys.each {|id|
+        umsg = URI.parse(id)
         code = @wget.get(umsg)
         next if '404' == code
         body = @wget.body
@@ -209,10 +210,10 @@ class SynDL
         t = Time.now.utc
         @folder.add(fnam, body, t)
         ldb[id] = t.strftime('%Y-%m-%dT%H%M%SZ')
-        defer[umsg] = false
+        defer.delete(id)
         @wget.waitok(i * 11)
       }
-    } unless defer.empty?
+    }
     setlmt(feed, lmt2, etag2)
   end
 
