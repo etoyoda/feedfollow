@@ -29,7 +29,7 @@ class App
     if /"200"=>(\d+)/ === line then
       row['dlfiles'] = row['dlfiles'].to_i + Integer($1)
     end
-    if /"([45]\d\d)"=>\d+/ === line then
+    if /"([45]\d\d|wait\w+)"=>\d+/ === line then
       rc = $1
       row['err'] = '' unless row['err']
       row['err'] += " #{rc},#{time.strftime('%H:%M')}"
