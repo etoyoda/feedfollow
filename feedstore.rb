@@ -183,13 +183,13 @@ class FeedStore
     li = AtomParse.new { |rec|
       STDERR.puts rec.inspect if $VERBOSE
       ft = Time.parse(rec['updated']).utc
+      id = rec['id']
       if @dfilter then
         unless @dfilter === ft then
           STDERR.puts "skip -d #{ft} #{id}" if $VERBOSE
           next
         end
       end
-      id = rec['id']
       if idb.has_key?(id) then
         STDERR.puts "skip dup #{id}" if $VERBOSE
         next
