@@ -164,7 +164,7 @@ class FeedStore
   end
 
   def tmpnam(feed)
-    feed.split(/\//).compact.last + Time.now.utc.strftime('-%Y-%m-%dT%H%M%S') + "-#{$$}.xml"
+    File.basename(feed) + Time.now.utc.strftime('-%Y-%m-%dT%H%M%S') + "-#{$$}.xml"
   end
 
   def getfeed(idb, tar, feed)
@@ -210,7 +210,7 @@ class FeedStore
         STDERR.puts "size #{body.size}" if $VERBOSE
         idb["lmt/#{id}"] = lmt2
         t = Time.now.utc
-        pos = tar.add(id, body, t)
+        pos = tar.add(File.basename(id), body, t)
         idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
