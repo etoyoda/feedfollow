@@ -211,10 +211,14 @@ class FeedStore
         idb["lmt/#{id}"] = lmt2
         t = Time.now.utc
         mid = File.basename(id)
-        pos = tar.add(mid, body, t)
-        idb[mid] = idb[id] = pos.to_s
-        m = t.strftime('m/%Y-%m-%dT%H%M')
-        idb[m] = [String(idb[m]), id, " "].join
+        if idb.has_key?(mid) then
+          STDERR.puts "skip dup2 #{mid}" if $VERBOSE
+        else
+          pos = tar.add(mid, body, t)
+          idb[mid] = idb[id] = pos.to_s
+          m = t.strftime('m/%Y-%m-%dT%H%M')
+          idb[m] = [String(idb[m]), mid, " "].join
+        end
       rescue Errno::ENOENT
         nil
       end
