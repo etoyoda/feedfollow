@@ -210,8 +210,9 @@ class FeedStore
         STDERR.puts "size #{body.size}" if $VERBOSE
         idb["lmt/#{id}"] = lmt2
         t = Time.now.utc
-        pos = tar.add(File.basename(id), body, t)
-        idb[id] = pos.to_s
+        mid = File.basename(id)
+        pos = tar.add(mid, body, t)
+        idb[mid] = idb[id] = pos.to_s
         m = t.strftime('m/%Y-%m-%dT%H%M')
         idb[m] = [String(idb[m]), id, " "].join
       rescue Errno::ENOENT
