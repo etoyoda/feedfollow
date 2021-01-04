@@ -22,7 +22,7 @@ cd ${datedir}
 sleep ${magic}
 
 rc=0 && \
-$ruby ${nwp}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} \
+$ruby ${nwp}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} -a60 \
   "${feeddir}/regular.xml" "${feeddir}/extra.xml" \
   "${feeddir}/eqvol.xml" "${feeddir}/other.xml" \
   || rc=$?

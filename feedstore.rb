@@ -21,6 +21,11 @@ class WGet
     $logger = Syslog.open('feedstore', Syslog::LOG_PID, Syslog::LOG_NEWS)
     $onset = Time.now
     @n = Hash.new(0)
+    @acheck = nil
+  end
+
+  def acheck= val
+    @acheck = val
   end
 
   def ca= val
@@ -59,6 +64,16 @@ class WGet
       hdr['if-modified-since'] = lmt
     end
     @resp = @conn.request_get(path, hdr)
+    if @acheck then
+      if /max-age=(\d+)/ === @resp['cache-control'] then
+        x = $1.to_i
+        if x > @acheck then
+          msg = "Max-Age: #{x} > #@acheck"
+          STDERR.puts msg if $VERBOSE
+          $logger.err(msg)
+        end
+      end
+    end
     rc = @resp.code
     STDERR.puts "--> #{rc}" if $VERBOSE
     @n[rc] += 1
@@ -243,6 +258,10 @@ class FeedStore
             base = Time.gm($1.to_i, $2.to_i, $3.to_i)
             @dfilter = base...(base + 86400)
             STDERR.puts @dfilter.inspect if $VERBOSE
+          when /^-a(\d+)/
+            a = $1.to_i
+            STDERR.puts "set max-age-check #{a}" if $VERBOSE
+            @wget.acheck = a
           else
             getfeed(idb, tar, feed)
           end
