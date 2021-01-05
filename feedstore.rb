@@ -21,12 +21,10 @@ class WGet
     $logger = Syslog.open('feedstore', Syslog::LOG_PID, Syslog::LOG_NEWS)
     $onset = Time.now
     @n = Hash.new(0)
-    @acheck = nil
+    @maxage = nil
   end
 
-  def acheck= val
-    @acheck = val
-  end
+  attr_reader :maxage
 
   def ca= val
     @ca = val
@@ -64,15 +62,10 @@ class WGet
       hdr['if-modified-since'] = lmt
     end
     @resp = @conn.request_get(path, hdr)
-    if @acheck then
-      if /max-age=(\d+)/ === @resp['cache-control'] then
-        x = $1.to_i
-        if x > @acheck then
-          msg = "Max-Age: #{x} > #@acheck"
-          STDERR.puts msg if $VERBOSE
-          $logger.err(msg)
-        end
-      end
+    if /max-age=(\d+)/ === @resp['cache-control'] then
+      @maxage = $1.to_i
+    else
+      @maxage = nil
     end
     rc = @resp.code
     STDERR.puts "--> #{rc}" if $VERBOSE
@@ -156,6 +149,7 @@ class FeedStore
     @wget.ca = ca
     @dfilter = nil
     @feedtar = nil
+    @acheck = nil
   end
 
   def getlmt(feed)
@@ -193,7 +187,13 @@ class FeedStore
     end
     fbdy = @wget.body
     lmt2 = @wget.lmt
-    @feedtar.add(tmpnam(feed), fbdy)
+    @feedtar.add(tn = tmpnam(feed), fbdy)
+    if @acheck and @wget.maxage then
+      if @wget.maxage > @acheck then
+        msg = "Max-Age: #{@wget.maxage} exceeds #{@acheck} for #{tn}"
+        $logger.err(msg)
+      end
+    end
     # @wget can be reused now
     li = AtomParse.new { |rec|
       STDERR.puts rec.inspect if $VERBOSE
@@ -259,9 +259,8 @@ class FeedStore
             @dfilter = base...(base + 86400)
             STDERR.puts @dfilter.inspect if $VERBOSE
           when /^-a(\d+)/
-            a = $1.to_i
-            STDERR.puts "set max-age-check #{a}" if $VERBOSE
-            @wget.acheck = a
+            @acheck = $1.to_i
+            STDERR.puts "set max-age-check #{@acheck}" if $VERBOSE
           else
             getfeed(idb, tar, feed)
           end
