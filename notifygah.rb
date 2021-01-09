@@ -43,7 +43,6 @@ for feed, tdif in queue
     rc = 0
   else
     msg = sprintf('err %s %g feed=%s', r.code, tdif, File.basename(feed))
-    $stderr.puts(msg)
     $logger.err(msg)
     rc = 4
   end
