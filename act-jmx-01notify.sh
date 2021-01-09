@@ -14,10 +14,6 @@ cd ${datedir}
 ymd=$(basename ${datedir} .new)
 
 rc=0 && $ruby ${script} jmx-lmt.db 2>/dev/null || rc=$?
-if (( $rc != 0 )) ; then
-  logger --tag notifygah --id=$$ -p news.err -s -- "rc=$rc"
-  exit $rc
-fi
 
 exit 0
 
