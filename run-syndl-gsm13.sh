@@ -18,8 +18,7 @@ set -e
 rc=0
 $ruby $syndl ${datedir}/gsm13-etag.db ${datedir}/gsm13-log.db \
   --tar=gsm13-${reftime}.tar $ca --tag=gsm13 \
-  --reject='2.5.2.5' \
-  --match='Surface|Mean.sea.level|925hPa|850hPa|700hPa|500hPa|300hPa|250hPa|30hPa' \
+  --match='Upper.air.layers' \
   "${app}&Type=GRIB&Indicator=RJTD" || rc=$?
 
 prio='-p news.err -s'
