@@ -4,22 +4,28 @@ PATH=/bin:/usr/bin
 
 : ${phase:?} ${base:?} ${reftime:?} ${datedir:?} ${nwp:?}
 
-: ${ruby:=/usr/bin/ruby}
-: ${syndl:=${nwp}/bin/syndl.rb}
-: ${app:='https://www.wis-jma.go.jp/data/syn?ContentType=Text&Access=Open'}
-: ${ca:='--ca=/etc/ssl/certs/'}
+: ${wget:=/usr/bin/wget}
+: ${app:='https://www.wis-jma.go.jp/data/syn?ContentType=Text&Indicator=RJTD&Type=GRIB&Level=Upper+air+layers'}
 
 if tty -s; then
-  ruby="${ruby} -w"
+  :
+else
+  wget="${wget} -q"
 fi
 
 set -e
 
-rc=0
-$ruby $syndl ${datedir}/gsm13-etag.db ${datedir}/gsm13-log.db \
-  --tar=gsm13-${reftime}.tar $ca --tag=gsm13 \
-  --match='Upper.air.layers' \
-  "${app}&Type=GRIB&Indicator=RJTD" || rc=$?
+text -d ${datedir}
+cd ${datedir}
+
+$wget -O"z-gsm13-syn.txt" "$app"
+if test -s z-gsm13-syn.txt ; then
+  $wget -i"z-gsm13-syn.txt"
+  tar cf gsm13-${reftime}.tar *grib.bin
+fi
+rm -f ${datedir}/z-gsm13-syn.txt
+
+exit 3
 
 prio='-p news.err -s'
 case $rc in
