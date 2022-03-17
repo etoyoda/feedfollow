@@ -151,6 +151,7 @@ class FeedStore
     @feedtar = nil
     @acheck = nil
     @xfilter = nil
+    @lfilter = nil
   end
 
   def getlmt(feed)
@@ -205,6 +206,10 @@ class FeedStore
           STDERR.puts "skip -d #{ft} #{id}" if $VERBOSE
           next
         end
+      end
+      if @lfilter and not @lfilter === id then
+        STDERR.puts "limit #{id}" if $VERBOSE
+        next
       end
       if @xfilter and @xfilter === id then
         STDERR.puts "exclude #{id}" if $VERBOSE
@@ -266,6 +271,9 @@ class FeedStore
           when /^-a(\d+)/
             @acheck = $1.to_i
             STDERR.puts "set max-age-check #{@acheck}" if $VERBOSE
+          when /^-l/
+            @lfilter = Regexp.new($')
+            STDERR.puts "limit #{@lfilter.inspect}" if $VERBOSE
           when /^-x/
             @xfilter = Regexp.new($')
             STDERR.puts "exclude #{@xfilter.inspect}" if $VERBOSE
