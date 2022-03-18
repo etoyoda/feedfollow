@@ -276,7 +276,14 @@ class FeedStore
             STDERR.puts "limit #{@lfilter.inspect}" if $VERBOSE
           when /^-x/
             @xfilter = Regexp.new($')
-            STDERR.puts "exclude #{@xfilter.inspect}" if $VERBOSE
+            # 暫定対処：x オプションは 40% の確率で無効化する
+            if rand < 0.4 then
+              $VERBOSE = true
+              STDERR.puts "skip (exclude #{@xfilter.inspect})" if $VERBOSE
+              @xfilter = nil
+            else
+              STDERR.puts "exclude #{@xfilter.inspect}" if $VERBOSE
+            end
           else
             getfeed(idb, tar, feed)
           end
