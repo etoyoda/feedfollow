@@ -277,7 +277,7 @@ class FeedStore
           when /^-x/
             @xfilter = Regexp.new($')
             # 暫定対処：x オプションは 40% の確率で無効化する
-            if rand < 0.4 then
+            if rand < 0.1 then
               $VERBOSE = true
               STDERR.puts "skip (exclude #{@xfilter.inspect})" if $VERBOSE
               @xfilter = nil
