@@ -13,7 +13,7 @@ CONFIG
 fi
 : ${bindir:?} ${priv:?} ${cgidir:?}
 
-target="batch.sh act-*.sh run-*.sh syndl.rb feedstore.rb syslogscan.rb idxshadow.rb notifygah.rb defunct-delete.rb"
+target="batch.sh act-p0-housekeep.sh run-*.sh syndl.rb feedstore.rb syslogscan.rb idxshadow.rb notifygah.rb defunct-delete.rb"
 
 sudo -u $priv install -m 0755 $target $bindir
 
