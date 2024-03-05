@@ -71,7 +71,9 @@ class App
   def run argf
     argf.set_encoding('ASCII-8BIT')
     argf.each_line {|line|
-      raise "bad time format <#{line}>" unless /^(\w\w\w [ 123]\d \d\d:\d\d:\d\d)/ === line
+      unless /^(\w\w\w [ 123]\d \d\d:\d\d:\d\d)/ === line
+        next
+      end
       time = Time.parse($1)
       next unless /(oom-killer|run-prep|syndl|feedstore|wxmon|jmxscan|pshbspool|tarwriter|notifygah)/ === line
       tag = $1
