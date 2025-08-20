@@ -14,7 +14,8 @@ class App
     @argv = argv
     if @argv.empty?
       @argv = ['/var/log/apache2/access.log.1',
-        '/var/log/apache2/access.log.7.gz']
+        '/var/log/apache2/access.log.7.gz',
+        '/var/log/apache2/access.log.14.gz']
       diag "argv = #{@argv.inspect}"
     end
     @archhosts = {}
