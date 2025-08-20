@@ -100,10 +100,10 @@ end
 class AtomParse
   include REXML::StreamListener
 
-  def initialize
+  def initialize &callback
     @tag = nil
     @rec = {}
-    @cb = proc
+    @cb = callback
   end
 
   TAGS = /^(name|author|id|title|updated)$/
