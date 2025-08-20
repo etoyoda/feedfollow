@@ -332,11 +332,17 @@ class App
       "", body ].join("\r\n")
   end
 
+  def barf
+    sleep(10+rand*60)
+    return "Status: 303 See Other\r\nLocation: https://example.com/\r\n\r\nbarf"
+  end
+
   def getmethod
     case @path
     when %r{^/index\.html?$} then path_index
     when %r{^/hist/([-\w]+)$} then path_hist($1)
     when %r{^/list/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)(?:/(\d+))?$} then path_list($1, $2, $3)
+    when %r{^/entry/2019} then barf
     when %r{^/entry/(\d\d\d\d-\d\d-\d\d(?:\.new)?)/([-\w]+)/([-.:\w]+)$} then path_entry($1, $2, $3)
     else
       url = "#{myname}/index.html"
