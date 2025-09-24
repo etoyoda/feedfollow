@@ -1,6 +1,8 @@
 #!/usr/bin/ruby
 
 archsv="cherrypie"
+DAY = 86400
+thr = Time.now.utc - DAY * 4
 
 Dir.glob("/nwp/a?").each{|ax|
   Dir.glob(ax+"/20[0-9][0-9]-[01][0-9]").each{|axym|
@@ -14,6 +16,10 @@ Dir.glob("/nwp/a?").each{|ax|
         st=File.stat(fnam)
         if st.size != size
           STDERR.puts "sz here #{st.size} != archsv #{size} : #{fnam}"
+          next
+        end
+        if st.mtime > thr
+          STDERR.puts "keep new #{st.mtime} #{fnam}"
           next
         end
         puts "rm #{fnam}\r"
