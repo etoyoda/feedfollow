@@ -24,3 +24,5 @@ if [[ -f /usr/local/etc/pshbspool-cfg.rb ]]; then
 else
   sudo install pshbspool-cfg.rb /usr/local/etc/
 fi
+
+sudo install -m 0644 crond.txt /etc/cron.d/feedfollow
