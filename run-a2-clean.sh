@@ -11,7 +11,7 @@ dd=$3
 ymd="${yy}-${mm}-${dd}"
 
 a2mondir=${a2dir}/${yy}-${mm}
-test -d $a2mondir || mkdir $a2mondir
+test -d $a2mondir || mkdir -p $a2mondir
 
 zip -q -r $a2mondir/text-${ymd}.zip ${ymd}*wxmon ${ymd}*plot
 
