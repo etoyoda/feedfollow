@@ -1,7 +1,7 @@
 # m h  dom mon dow  user  command
-#*/3 *  * * * nwp nwp=/nwp bash /nwp/bin/run-prep0.sh /nwp/bin/run-syndl-obs.sh
-# *   *  * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-prep0.sh /nwp/bin/run-feedstore.sh
-#57 *  * * * nwp nwp=/nwp bash /nwp/bin/run-prep0.sh /nwp/bin/act-jmx-00scan.sh
-#01  20 * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-wxmon-report.sh
-#40  13 * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-a0-defunct.sh
-#20  10 * * * nwp bash /nwp/bin/run-a2-clean.sh
+*/3 *  * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-prep0.sh /nwp/bin/run-syndl-obs.sh
+*   *  * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-prep0.sh /nwp/bin/run-feedstore.sh
+57  *  * * * nwp nwp=/nwp bash /nwp/bin/run-prep0.sh /nwp/bin/act-jmx-00scan.sh
+01  20 * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-wxmon-report.sh
+40  13 * * * nwp nwp=/nwp bash /nwp/bin/batch.sh /nwp/bin/run-a0-defunct.sh
+20  10 * * * nwp bash /nwp/bin/run-a2-clean.sh

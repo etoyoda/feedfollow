@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -x /usr/local/bin/gdbm ]; then
+  echo install https://github.com/etoyoda/gdbm-frontend
+  exit 1
+fi
+
 if [ -f .deploy ] ; then
   source ./.deploy
 else
@@ -12,6 +17,11 @@ CONFIG
   exit 1
 fi
 : ${bindir:?} ${priv:?} ${cgidir:?}
+
+for p in /nwp/p0 /nwp/p1 /nwp/p2
+do
+  test -d "$p" || sudo -u $priv mkdir -p "$p"
+done
 
 target="batch.sh act-p0-housekeep.sh run-*.sh syndl.rb feedstore.rb syslogscan.rb idxshadow.rb notifygah.rb defunct-delete.rb mailjis.sh"
 
@@ -26,3 +36,5 @@ else
 fi
 
 sudo install -m 0644 crond.txt /etc/cron.d/feedfollow
+
+
