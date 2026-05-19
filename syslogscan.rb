@@ -71,7 +71,8 @@ class App
   def run argf
     argf.set_encoding('ASCII-8BIT')
     argf.each_line {|line|
-      unless /^(\w\w\w [ 123]\d \d\d:\d\d:\d\d)/ === line
+      unless /^(\w\w\w [ 123]\d \d\d:\d\d:\d\d|\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d+\+\d\d:\d\d)/ === line
+#2026-05-17T00:00:00.756565+09:00 ika rsyslogd: [origin software="rsyslogd" swVersion="8.2312.0" x-pid="692" x-info="https://www.rsyslog.com"] rsyslogd was HUPed
         next
       end
       time = Time.parse($1)
