@@ -11,6 +11,7 @@ require 'rexml/parsers/streamparser'
 require 'rexml/streamlistener'
 require 'rubygems'
 require 'tarwriter'
+require 'timeout'
 
 class WGet
 
@@ -285,13 +286,17 @@ class FeedStore
               STDERR.puts "exclude #{@xfilter.inspect}" if $VERBOSE
             end
           else
-            getfeed(idb, tar, feed)
+            Timeout.timeout(600) {
+              getfeed(idb, tar, feed)
+            }
           end
         }
       }
     }
-  rescue Errno::EAGAIN
-    $logger.err('rescue=EAGAIN idx=%s', @outfnam)
+  rescue Errno::EAGAIN => e
+    $logger.err('rescue=EAGAIN idx=%s %s', @outfnam, e.backtrace.first.to_s)
+  rescue Timeout::Error => e
+    $logger.err('rescue=TIMEOUT idx=%s %s', @outfnam, e.backtrace.first.to_s)
   ensure
     @feedtar.close if @feedtar
     @wget.close
