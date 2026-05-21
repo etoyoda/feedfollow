@@ -22,6 +22,7 @@ cd ${datedir}
 sleep ${magic}
 
 rc=0 && \
+timeout -k 30 300 \
 $ruby ${nwp}/bin/feedstore.rb jmx-lmt.db jmx-${reftime} ${ca} -a60 \
   "-xVPRN50" \
   "${feeddir}/regular.xml" "${feeddir}/extra.xml" \
