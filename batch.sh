@@ -14,7 +14,7 @@ batch 2>/dev/null <<EOF
 : --- THIS PART CANNOT CONTAIN BASH SYNTAX ---
 nwp=$nwp
 JOBID=$cmd-`date +%Y%m%dT%H%M`_$$
-LANG=C
+LANG=C.UTF-8
 TZ=UTC
 export nwp JOBID LANG TZ
 PATH=/bin:/usr/bin
