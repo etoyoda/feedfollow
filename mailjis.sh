@@ -1,8 +1,5 @@
 #!/bin/sh
 
-LANG=en_US.UTF-8
-export LANG
-
 : usage: $0 input.txt from@example.org [-s subject] dest@example.com ...
 
 input=$1
@@ -22,7 +19,7 @@ esac
 
 test ! -f z.mail || rm -f z.mail
 printf '%s\r\n' "From: $mailfrom" > z.mail
-printf '%s\r\n' "To: $mailfrom" >> z.mail
+printf '%s\r\n' "To: $@" >> z.mail
 printf '%s\r\n' "Subject: ${sbj}" >> z.mail
 printf '%s\r\n' "Mime-Version: 1.0" >> z.mail
 printf '%s\r\n' "Content-Type: text/plain; charset=ISO-2022-JP" >> z.mail
