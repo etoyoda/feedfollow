@@ -14,6 +14,7 @@ class App
     @argv = argv
     if @argv.empty?
       @argv = ['/var/log/apache2/access.log.1',
+        '/var/log/apache2/access.log.2.gz',
         '/var/log/apache2/access.log.3.gz',
         '/var/log/apache2/access.log.11.gz',
         '/var/log/apache2/access.log.12.gz',
@@ -60,7 +61,7 @@ class App
 
   def logfile ifp
     ifp.each_line{|line|
-      next unless /^\S+ (\S+) .*\] "GET (\S+) HTTP\/1\.." 200 (\d+)/ === line
+      next unless /^(\S+) \S+ .*\] "GET (\S+) HTTP\/1\.." 200 (\d+)/ === line
       checkfile($1, $2, $3)
     }
   end
