@@ -59,6 +59,7 @@ class App
         case val
         when String
           val = val.gsub(/\s+/, '|')
+          val = val[0..72]+'...' if val.length > 80
         when Float
           val = '%-9.3f' % val
         end
