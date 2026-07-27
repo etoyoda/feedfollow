@@ -164,7 +164,7 @@ class App
     ttl = 60 if /\.new$/ === datedir
     tnow = check_hims(ttl)
     offset = offset.to_i
-    require 'archive/tar/minitar'
+    require 'minitar'
     require 'html_builder'
     ymd = datedir.sub(/\.new$/, '')
     d = HTMLBuilder.new("syndl: list - #{dsname} #{ymd} offset #{offset}")
@@ -195,7 +195,7 @@ class App
     File.open(tarfile, 'rb') {|fp|
       fp.set_encoding('BINARY')
       io = do_gunzip ? Zlib::GzipReader.new(fp) : fp
-      Archive::Tar::Minitar::Reader.open(io) { |tar|
+      Minitar::Reader.open(io) { |tar|
         tar.each_entry {|ent|
           iskip -= 1
           next if iskip >= 0
