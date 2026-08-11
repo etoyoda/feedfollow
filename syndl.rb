@@ -7,6 +7,7 @@ require 'gdbm'
 require 'syslog'
 require 'rubygems'
 require 'tarwriter'
+require 'socket'
 
 class WGet
 
@@ -18,7 +19,15 @@ class WGet
     $onset = Time.now
     @n = Hash.new(0)
     @n['-w'] = !!($VERBOSE)
+    @force_ipv4 = @force_ipv6 = nil
+  end
+
+  def force_ipv4
     @force_ipv4 = true
+  end
+
+  def force_ipv6
+    @force_ipv6 = true
   end
 
   def ca= val
@@ -34,10 +43,16 @@ class WGet
     @conn = Net::HTTP.new(uri.host, uri.port, :ENV)
     @conn.use_ssl = true
     if @force_ipv4 then
-      require 'socket'
       addrs = Socket.getaddrinfo(uri.host, uri.port, Socket::AF_INET, Socket::SOCK_STREAM)
       @conn.ipaddr = addrs.first[3]
+      STDERR.puts("force_ipv4 #{uri.host} #{addrs.first[3]}") if $VERBOSE
       $logger.info("force_ipv4 #{uri.host} #{addrs.first[3]}")
+    end
+    if @force_ipv6 then
+      addrs = Socket.getaddrinfo(uri.host, uri.port, Socket::AF_INET6, Socket::SOCK_STREAM)
+      @conn.ipaddr = addrs.first[3]
+      STDERR.puts("force_ipv6 #{uri.host} #{addrs.first[3]}") if $VERBOSE
+      $logger.info("force_ipv6 #{uri.host} #{addrs.first[3]}")
     end
     if @ca
       if /\/$/ === @ca then
@@ -231,6 +246,10 @@ class SynDL
     GDBM.open(@logdb, 0644, GDBM::WRCREAT) {|ldb|
     @feeds.each {|feed|
       case feed
+      when /^--ipv4$/
+        @wget.force_ipv4
+      when /^--ipv6$/
+        @wget.force_ipv6
       when /^--match=/
         if $'.empty? then @pfilter.delete(:match)
         else @pfilter[:match] = Regexp.new($')
