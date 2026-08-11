@@ -18,6 +18,7 @@ class WGet
     $onset = Time.now
     @n = Hash.new(0)
     @n['-w'] = !!($VERBOSE)
+    @force_ipv4 = true
   end
 
   def ca= val
@@ -32,6 +33,12 @@ class WGet
     STDERR.puts "#CONNECT #{uri.host}:#{uri.port}" if $VERBOSE
     @conn = Net::HTTP.new(uri.host, uri.port, :ENV)
     @conn.use_ssl = true
+    if @force_ipv4 then
+      require 'socket'
+      addrs = Socket.getaddrinfo(uri.host, uri.port, Socket::AF_INET, Socket::SOCK_STREAM)
+      @conn.ipaddr = addrs.first[3]
+      $logger.info("force_ipv4 #{uri.host} #{addrs.first[3]}")
+    end
     if @ca
       if /\/$/ === @ca then
         @conn.ca_path = @ca
@@ -63,7 +70,7 @@ class WGet
       rc = @resp.code
     rescue Exception => e
       rc = '500'
-      $logger.err("#{rc} rescue=#{e.class.to_s}")
+      $logger.err("#{rc} rescue=#{e.class.to_s} #{e.backtrace.first}")
     end
     @n[rc] += 1
     rc
