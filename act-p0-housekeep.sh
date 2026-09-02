@@ -34,7 +34,7 @@ if [[ -d ${yesterday}/logs ]]; then
   fi
 fi
 
-weekago=$(ruby -rdate -e 'puts(Date.parse(ARGV.first) - 9)' ${reftime})
+weekago=$(ruby -rdate -e 'puts(Date.parse(ARGV.first) - 7)' ${reftime})
 
 for dir in 2???-??-?[0-9]
 do
