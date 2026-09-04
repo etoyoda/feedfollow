@@ -16,6 +16,7 @@ fi
 set -e
 
 rc=0 && $ruby $syndl ${datedir}/obsan-etag.db ${datedir}/obsan-log.db \
+  --ipv4 \
   --tar=obsan-${reftime}.tar $ca --tag=obsan \
   --match='TEMP|PILOT' \
   "${app}&Type=Alphanumeric&Category=Upper+air" \
@@ -35,6 +36,7 @@ logger --tag syndl.obsan --id=$$ $prio -- "rc=$rc"
 sleep 1
 
 rc=0 && $ruby $syndl ${datedir}/obsbf-etag.db ${datedir}/obsbf-log.db \
+  --ipv4 \
   --tar=obsbf-${reftime}.tar $ca --tag=obsbf \
   --match='TEMP|PILOT' \
   "${app}&Type=BUFR&Category=Upper+air" \
