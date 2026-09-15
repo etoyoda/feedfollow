@@ -48,6 +48,11 @@ do
       if [[ ! -f ${tar} ]]; then
         continue
       fi
+      case "$(basename $tar)" in
+      gwjp*|gwde*|gras*)
+	continue
+	;;
+      esac
       tgz=${abase}/${month}/$(basename ${tar}).gz
       if [[ ! -f ${tar}.gz ]]; then
         logger --tag p0-housekeep --id=$$ -p news.notice "gzip -9k ${tar}"
