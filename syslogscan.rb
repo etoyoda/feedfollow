@@ -77,7 +77,7 @@ class App
         next
       end
       time = Time.parse($1)
-      next unless /(oom-killer|run-prep|syndl|feedstore|wxmon|jmxscan|pshbspool|tarwriter|notifygah)/ === line
+      next unless /(oom-killer|run-prep|syndl|feedstore|wxmon|jmxscan|pshbspool|tarwriter|notifygah|wnm-obscache)/ === line
       tag = $1
       tag = $1 if /syndl\.(\w+)/ === line
       tag = $1 if /"tag"=>"(\w+)"/ === line
