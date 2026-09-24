@@ -1,5 +1,6 @@
 #!/bin/bash
 set -Ceuo pipefail
+shopt -s nullglob
 
 PATH=/bin:/usr/bin
 TZ=UTC; export TZ
@@ -62,11 +63,13 @@ do
         logger --tag p0-housekeep --id=$$ -p news.notice "ln ${tar}.gz ${tgz}"
         ln -Tf ${tar}.gz ${tgz} || continue
       fi
-      if [[ $dir < $yesterday ]] ; then
+    done
+    if [[ $dir < $yesterday ]] ; then
+      for tar in $dir/*.tar $dir/wis2-*.gdbm ; do
         logger --tag p0-housekeep --id=$$ -p news.notice "rm -f ${tar}"
         rm -f ${tar} || continue
-      fi
-    done
+      done
+    fi
   fi
 done
 
