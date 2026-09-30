@@ -1,29 +1,31 @@
 #!/usr/bin/ruby
 
+require 'time'
+
 origsv="ika.toyoda-eizi.net"
 DAY = 86400
-thr = Time.now.utc - DAY * 4
 
 Dir.glob("/nwp/a?").each{|ax|
-  Dir.glob(ax+"/20[0-9][0-9]-[01][0-9]").each{|axym|
-    puts ": scanning #{axym}"
-    IO.popen("ssh #{origsv} find #{axym} -type f -ls", "r"){|fp|
+    puts ": scanning #{ax}"
+    IO.popen("ssh #{origsv} 'LC_ALL=C find #{ax}/ -type f -ls'", "r"){|fp|
       for line in fp
-        cell=line.chomp.split(/ +/,11)
-        size=cell[6].to_i
-        fnam=cell[10]
+        cell=line.chomp.split(/ +/,12)
+        size=cell[7].to_i
+        fnam=cell[11]
+        mtime=Time.parse(cell[8..10].join(' '))
         next unless File.exist?(fnam)
         st=File.stat(fnam)
         if st.size != size
-          puts ": sz here #{st.size} != origsv #{size} : #{fnam}"
+          puts ": sz origsv #{size} != archsv #{st.size} : #{fnam}"
           next
         end
-        if st.mtime > thr
-          puts ": keep new #{st.mtime} #{fnam}"
+        if st.mtime < mtime
+          puts ": mtime origsv #{mtime} > archsv #{st.mtime} #{fnam}"
           next
         end
-        puts "[ #{orighost} = `hostname` ] && rm #{fnam}\r"
+        # never remove files on archsv, so hostname is tested
+        puts "[ #{origsv} = `hostname` ] && rm #{fnam}"
       end
     }
-  }
 }
+puts ": run above script on #{origsv}"
